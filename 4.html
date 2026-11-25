@@ -1,0 +1,2271 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DevReceipt Studio — Generator Struk & Kwitansi Khusus Developer</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- html2canvas untuk Export ke PNG -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- QRCode.js untuk QR Verifikasi / Pembayaran -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#fffbeb',
+              100: '#fef3c7',
+              400: '#fbbf24',
+              500: '#f59e0b',
+              600: '#d97706',
+              900: '#78350f',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* Custom Scrollbar untuk Panel Editor */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Background Grid pada Canvas Preview */
+    .canvas-grid-bg {
+      background-color: #e2e8f0;
+      background-image:
+        radial-gradient(#cbd5e1 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    /* Transisi Kertas Struk */
+    #receipt-sheet {
+      transition: width 0.25s ease, min-height 0.25s ease, transform 0.2s ease;
+      box-sizing: border-box;
+      transform-origin: top center;
+    }
+
+    /* Garis sobekan struk thermal */
+    .thermal-edge-top {
+      background: linear-gradient(-45deg, #ffffff 6px, transparent 0), linear-gradient(45deg, #ffffff 6px, transparent 0);
+      background-position: left-bottom;
+      background-repeat: repeat-x;
+      background-size: 12px 12px;
+      height: 12px;
+      width: 100%;
+    }
+    .thermal-edge-bottom {
+      background: linear-gradient(-45deg, transparent 6px, #ffffff 0), linear-gradient(45deg, transparent 6px, #ffffff 0);
+      background-position: left-top;
+      background-repeat: repeat-x;
+      background-size: 12px 12px;
+      height: 12px;
+      width: 100%;
+    }
+
+    /* Tab Active Indicator */
+    .tab-btn.active {
+      background-color: #0f172a;
+      color: #ffffff;
+    }
+
+    /* Print Styles dasar (akan diperbarui dinamis oleh JS sesuai ukuran kertas) */
+    @media print {
+      body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      #preview-wrapper {
+        padding: 0 !important;
+        margin: 0 !important;
+        background: none !important;
+        overflow: visible !important;
+        display: block !important;
+        height: auto !important;
+      }
+      #receipt-zoom-container {
+        transform: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      #receipt-sheet {
+        box-shadow: none !important;
+        margin: 0 !important;
+        border: none !important;
+      }
+    }
+  </style>
+
+  <!-- Dynamic Print Page Size Style Tag -->
+  <style id="dynamic-print-style">
+    @media print {
+      @page {
+        size: A5 portrait;
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased selection:bg-amber-200 selection:text-slate-900">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="no-print fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Top Header Bar -->
+  <header class="no-print sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 lg:px-6 h-16 flex items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center font-mono font-bold text-lg shadow-sm">
+        &lt;/&gt;
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="font-bold text-slate-900 text-base sm:text-lg tracking-tight leading-none">DevReceipt Studio</h1>
+          <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+            v2.6 Static
+          </span>
+        </div>
+        <p class="text-xs text-slate-500 hidden sm:block mt-0.5">Generator Struk, Invoice & Kwitansi Jasa IT / Developer</p>
+      </div>
+    </div>
+
+    <!-- Preset & Export Action Buttons -->
+    <div class="flex items-center gap-2">
+      <!-- Quick Demo Presets Dropdown -->
+      <div class="relative hidden md:block">
+        <select id="preset-selector" onchange="loadDemoPreset(this.value)" class="appearance-none bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-semibold rounded-xl pl-3 pr-8 py-2.5 border border-slate-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
+          <option value="">⚡ Muat Contoh Proyek...</option>
+          <option value="webdev">🌐 Web App & Company Profile (Laravel/Next.js)</option>
+          <option value="mobileapp">📱 Aplikasi Mobile Android & iOS (Flutter)</option>
+          <option value="maintenance">🛠️ Maintenance, Server & Bug Fix Bulanan</option>
+          <option value="uiux">🎨 UI/UX Design System & Prototype Figma</option>
+        </select>
+        <span class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs">▼</span>
+      </div>
+
+      <button onclick="exportReceiptPNG()" id="btn-export-png" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 shadow-sm transition active:scale-95">
+        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+        <span>Simpan PNG</span>
+      </button>
+
+      <button onclick="printReceipt()" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white shadow-sm transition active:scale-95">
+        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+        <span>Print / PDF</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Workspace Split Layout -->
+  <div class="flex flex-col lg:flex-row lg:h-[calc(100vh-4rem)] overflow-hidden">
+
+    <!-- LEFT SIDEBAR: Kustomisasi & Form Input -->
+    <aside class="no-print w-full lg:w-[460px] xl:w-[500px] bg-white border-b lg:border-b-0 lg:border-r border-slate-200 flex flex-col lg:h-full shrink-0">
+      
+      <!-- Navigation Tabs -->
+      <div class="p-3 bg-slate-50 border-b border-slate-200 grid grid-cols-4 gap-1.5 shrink-0">
+        <button onclick="switchTab('layout')" id="tab-btn-layout" class="tab-btn active flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-semibold transition">
+          <span>🎨</span>
+          <span>Layout & Kertas</span>
+        </button>
+        <button onclick="switchTab('brand')" id="tab-btn-brand" class="tab-btn text-slate-600 hover:bg-slate-200/70 flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-semibold transition">
+          <span>🏷️</span>
+          <span>Logo & Studio</span>
+        </button>
+        <button onclick="switchTab('items')" id="tab-btn-items" class="tab-btn text-slate-600 hover:bg-slate-200/70 flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-semibold transition">
+          <span>💻</span>
+          <span>Jasa & Harga</span>
+        </button>
+        <button onclick="switchTab('payment')" id="tab-btn-payment" class="tab-btn text-slate-600 hover:bg-slate-200/70 flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-semibold transition">
+          <span>💳</span>
+          <span>Bayar & Klien</span>
+        </button>
+      </div>
+
+      <!-- Scrollable Controls Body -->
+      <div class="p-4 sm:p-5 overflow-y-auto flex-1 space-y-6">
+
+        <!-- ============================================================== -->
+        <!-- TAB 1: LAYOUT & UKURAN KERTAS                                  -->
+        <!-- ============================================================== -->
+        <div id="tab-panel-layout" class="space-y-6">
+          
+          <!-- 1. Pilihan Layout Template (7 Variasi) -->
+          <div>
+            <div class="flex items-center justify-between mb-2.5">
+              <label class="text-xs font-bold uppercase tracking-wider text-slate-500">1. Pilih Gaya Layout Struk (7 Pilihan)</label>
+              <span id="active-layout-badge" class="text-[11px] font-mono font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">Modern Studio</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5" id="layout-cards-grid">
+              <!-- Diisi via JS -->
+            </div>
+          </div>
+
+          <!-- 2. Warna Aksen -->
+          <div class="pt-4 border-t border-slate-100">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">2. Warna Aksen & Tema</label>
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="setAccentColor('#f59e0b')" class="w-8 h-8 rounded-xl bg-amber-500 border-2 border-white ring-2 ring-slate-200 hover:scale-105 transition" title="Amber Gold"></button>
+              <button onclick="setAccentColor('#0f172a')" class="w-8 h-8 rounded-xl bg-slate-900 border-2 border-white ring-2 ring-slate-200 hover:scale-105 transition" title="Obsidian Dark"></button>
+              <button onclick="setAccentColor('#2563eb')" class="w-8 h-8 rounded-xl bg-blue-600 border-2 border-white ring-2 ring-slate-200 hover:scale-105 transition" title="Electric Blue"></button>
+              <button onclick="setAccentColor('#10b981')" class="w-8 h-8 rounded-xl bg-emerald-500 border-2 border-white ring-2 ring-slate-200 hover:scale-105 transition" title="Emerald Tech"></button>
+              <button onclick="setAccentColor('#7c3aed')" class="w-8 h-8 rounded-xl bg-violet-600 border-2 border-white ring-2 ring-slate-200 hover:scale-105 transition" title="Indigo SaaS"></button>
+              <button onclick="setAccentColor('#e11d48')" class="w-8 h-8 rounded-xl bg-rose-600 border-2 border-white ring-2 ring-slate-200 hover:scale-105 transition" title="Crimson Studio"></button>
+              
+              <div class="flex items-center gap-1.5 ml-auto bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-200">
+                <input type="color" id="input-accent-color" value="#f59e0b" oninput="updateState('accentColor', this.value)" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent" />
+                <span class="text-xs font-mono text-slate-600" id="accent-hex-label">#f59e0b</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Ukuran Kertas (Besar / Kecil / Custom) -->
+          <div class="pt-4 border-t border-slate-100">
+            <div class="flex items-center justify-between mb-2.5">
+              <label class="text-xs font-bold uppercase tracking-wider text-slate-500">3. Ukuran Kertas (Kecil - Besar)</label>
+              <span id="paper-dimension-badge" class="text-[11px] font-mono text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">148mm × Auto</span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 mb-3" id="paper-presets-grid">
+              <!-- Diisi via JS -->
+            </div>
+
+            <!-- Custom Paper Dimension Controls -->
+            <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-700">Kustomisasi Dimensi (mm)</span>
+                <label class="inline-flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                  <input type="checkbox" id="input-auto-height" checked onchange="toggleAutoHeight(this.checked)" class="rounded text-slate-900 focus:ring-amber-500" />
+                  <span>Tinggi Otomatis (Struk Roll)</span>
+                </label>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-[11px] font-medium text-slate-500 mb-1">Lebar Kertas (mm)</label>
+                  <input type="number" id="input-paper-width" min="45" max="350" value="148" oninput="updatePaperCustom()" class="w-full px-3 py-2 text-xs font-mono bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-medium text-slate-500 mb-1">Tinggi Minimum (mm)</label>
+                  <input type="number" id="input-paper-height" min="60" max="500" value="210" disabled oninput="updatePaperCustom()" class="w-full px-3 py-2 text-xs font-mono bg-white border border-slate-300 rounded-xl disabled:bg-slate-100 disabled:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                </div>
+              </div>
+              <div class="flex items-center justify-between pt-1">
+                <span class="text-[11px] text-slate-500">Padding Dalam Kertas:</span>
+                <div class="flex items-center gap-2">
+                  <input type="range" id="input-paper-padding" min="10" max="44" value="24" oninput="updateState('paperPadding', parseInt(this.value))" class="w-24 accent-slate-900" />
+                  <span id="padding-val-label" class="text-[11px] font-mono text-slate-600 w-8 text-right">24px</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Opsi Elemen Visual -->
+          <div class="pt-4 border-t border-slate-100 space-y-2.5">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">4. Elemen Tambahan</label>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="flex items-center gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-100 transition">
+                <input type="checkbox" id="toggle-qr" checked onchange="updateState('showQR', this.checked)" class="rounded text-slate-900 focus:ring-amber-500" />
+                <span class="text-xs font-medium text-slate-700">Tampilkan QR Code</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-100 transition">
+                <input type="checkbox" id="toggle-stamp" checked onchange="updateState('showStamp', this.checked)" class="rounded text-slate-900 focus:ring-amber-500" />
+                <span class="text-xs font-medium text-slate-700">Stempel Status (LUNAS)</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-100 transition">
+                <input type="checkbox" id="toggle-signature" checked onchange="updateState('showSignature', this.checked)" class="rounded text-slate-900 focus:ring-amber-500" />
+                <span class="text-xs font-medium text-slate-700">Area Tanda Tangan</span>
+              </label>
+              <label class="flex items-center gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-100 transition">
+                <input type="checkbox" id="toggle-notes" checked onchange="updateState('showNotes', this.checked)" class="rounded text-slate-900 focus:ring-amber-500" />
+                <span class="text-xs font-medium text-slate-700">Info Rekening & Catatan</span>
+              </label>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- TAB 2: CUSTOM LOGO & IDENTITAS STUDIO                          -->
+        <!-- ============================================================== -->
+        <div id="tab-panel-brand" class="hidden space-y-5">
+          
+          <!-- Custom Logo Uploader -->
+          <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3.5">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-bold uppercase tracking-wider text-slate-600">Logo Custom Studio / Dev</label>
+              <select id="input-logo-mode" onchange="updateState('logoMode', this.value)" class="text-xs bg-white border border-slate-300 rounded-lg px-2 py-1 font-medium text-slate-700">
+                <option value="image">Gambar Upload / Monogram</option>
+                <option value="monogram">Monogram Kode (&lt;/&gt;)</option>
+                <option value="hidden">Sembunyikan Logo</option>
+              </select>
+            </div>
+
+            <div class="flex items-center gap-3.5">
+              <!-- Preview Thumbnail Logo -->
+              <div id="sidebar-logo-preview" class="w-16 h-16 rounded-xl bg-white border border-slate-300 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+                <span class="font-mono font-bold text-slate-800 text-lg">&lt;/&gt;</span>
+              </div>
+
+              <div class="flex-1 space-y-2">
+                <div class="flex flex-wrap gap-2">
+                  <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition">
+                    <span>📁 Upload Logo</span>
+                    <input type="file" id="input-logo-file" accept="image/*" onchange="handleLogoUpload(event)" class="hidden" />
+                  </label>
+                  <button onclick="removeCustomLogo()" id="btn-remove-logo" class="hidden px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold rounded-xl border border-rose-200 transition">
+                    Hapus
+                  </button>
+                </div>
+                <p class="text-[11px] text-slate-500">Mendukung PNG transparan, JPG, atau SVG.</p>
+              </div>
+            </div>
+
+            <!-- Ukuran & Bentuk Logo -->
+            <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-200/80">
+              <div>
+                <div class="flex justify-between text-[11px] text-slate-600 mb-1">
+                  <span>Ukuran Logo</span>
+                  <span id="logo-size-label" class="font-mono font-semibold">44px</span>
+                </div>
+                <input type="range" id="input-logo-size" min="24" max="96" value="44" oninput="updateState('logoSize', parseInt(this.value))" class="w-full accent-slate-900" />
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-600 mb-1">Bentuk Bingkai</label>
+                <select id="input-logo-shape" onchange="updateState('logoShape', this.value)" class="w-full text-xs bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-slate-700">
+                  <option value="rounded">Rounded Square</option>
+                  <option value="circle">Lingkaran (Circle)</option>
+                  <option value="none">Polos Tanpa Bingkai</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form Identitas Bisnis Developer -->
+          <div class="space-y-3">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">Identitas Developer / Agensi</label>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Nama Studio / Brand</label>
+                <input type="text" id="input-studio-name" value="WNDYS Dev Studio" oninput="updateState('studioName', this.value)" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Tagline / Spesialisasi</label>
+                <input type="text" id="input-studio-tagline" value="Web & Mobile App Engineering" oninput="updateState('studioTagline', this.value)" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Email / Website</label>
+                <input type="text" id="input-studio-email" value="hello@wndys.dev • wndys.dev" oninput="updateState('studioEmail', this.value)" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">WhatsApp / Telepon</label>
+                <input type="text" id="input-studio-phone" value="+62 812-5540-8890" oninput="updateState('studioPhone', this.value)" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Alamat Studio / Kota</label>
+              <input type="text" id="input-studio-address" value="Jl. Ahmad Yani Km. 4,5 No. 88, Banjarmasin, Kalimantan Selatan" oninput="updateState('studioAddress', this.value)" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Nama Penandatangan (PIC)</label>
+                <input type="text" id="input-signer-name" value="Wendy Pratama, S.Kom" oninput="updateState('signerName', this.value)" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Jabatan / NPWP (Opsional)</label>
+                <input type="text" id="input-signer-role" value="Lead Full-Stack Developer" oninput="updateState('signerRole', this.value)" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- TAB 3: DAFTAR JASA DEVELOPER & KALKULASI HARGA                 -->
+        <!-- ============================================================== -->
+        <div id="tab-panel-items" class="hidden space-y-5">
+          
+          <!-- Quick Add Developer Service Chips -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Tambah Cepat Layanan Developer</label>
+            <div class="flex flex-wrap gap-1.5">
+              <button onclick="quickAddItem('Pembuatan Website Custom', 'Frontend React/Next.js + Backend API & Admin Dashboard', 1, 4500000)" class="px-2.5 py-1.5 bg-slate-100 hover:bg-amber-100 hover:text-amber-900 text-slate-700 text-[11px] font-semibold rounded-lg border border-slate-200 transition">
+                + Web App Custom
+              </button>
+              <button onclick="quickAddItem('UI/UX Design & Prototype', 'Wireframe, Design System & High-Fidelity Figma (12 Screens)', 1, 1800000)" class="px-2.5 py-1.5 bg-slate-100 hover:bg-amber-100 hover:text-amber-900 text-slate-700 text-[11px] font-semibold rounded-lg border border-slate-200 transition">
+                + UI/UX Figma
+              </button>
+              <button onclick="quickAddItem('Setup Cloud VPS & Domain .COM', 'Konfigurasi Nginx, SSL Let\'s Encrypt, CI/CD & Backup (1 Thn)', 1, 850000)" class="px-2.5 py-1.5 bg-slate-100 hover:bg-amber-100 hover:text-amber-900 text-slate-700 text-[11px] font-semibold rounded-lg border border-slate-200 transition">
+                + Domain & Cloud VPS
+              </button>
+              <button onclick="quickAddItem('Integrasi Payment Gateway', 'Midtrans / Xendit QRIS & Virtual Account Webhook', 1, 1200000)" class="px-2.5 py-1.5 bg-slate-100 hover:bg-amber-100 hover:text-amber-900 text-slate-700 text-[11px] font-semibold rounded-lg border border-slate-200 transition">
+                + Payment Gateway
+              </button>
+              <button onclick="quickAddItem('Bug Fixing & Optimasi Performa', 'Audit Core Web Vitals, Refactor Query & Security Patch', 4, 250000)" class="px-2.5 py-1.5 bg-slate-100 hover:bg-amber-100 hover:text-amber-900 text-slate-700 text-[11px] font-semibold rounded-lg border border-slate-200 transition">
+                + Bug Fix / Jam
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic Line Items List -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Rincian Item / Deliverable</label>
+              <button onclick="addNewItem()" class="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition">
+                <span>+ Tambah Baris</span>
+              </button>
+            </div>
+
+            <div id="items-editor-list" class="space-y-3">
+              <!-- Diisi via JS -->
+            </div>
+          </div>
+
+          <!-- Pengaturan Mata Uang, Diskon, Pajak & DP -->
+          <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">Kalkulasi Keuangan & Mata Uang</label>
+            
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-medium text-slate-500 mb-1">Mata Uang</label>
+                <select id="input-currency" onchange="updateState('currency', this.value)" class="w-full px-3 py-2 text-xs font-semibold bg-white border border-slate-300 rounded-xl">
+                  <option value="IDR">IDR (Rp - Rupiah)</option>
+                  <option value="USD">USD ($ - US Dollar)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-slate-500 mb-1">Pajak / PPN (%)</label>
+                <input type="number" id="input-tax" min="0" max="100" step="0.5" value="0" oninput="updateState('taxPercent', parseFloat(this.value) || 0)" class="w-full px-3 py-2 text-xs font-mono bg-white border border-slate-300 rounded-xl" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-medium text-slate-500 mb-1">Diskon (Nominal)</label>
+                <input type="number" id="input-discount" min="0" value="0" oninput="updateState('discountAmount', parseFloat(this.value) || 0)" class="w-full px-3 py-2 text-xs font-mono bg-white border border-slate-300 rounded-xl" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-slate-500 mb-1">Sudah Dibayar / DP</label>
+                <input type="number" id="input-paid-amount" min="0" value="0" placeholder="0 = Lunas Penuh" oninput="updateState('paidAmount', parseFloat(this.value) || 0)" class="w-full px-3 py-2 text-xs font-mono bg-white border border-slate-300 rounded-xl" />
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-500">Tips: Isi kolom "Sudah Dibayar / DP" jika ini adalah struk pembayaran termin (misal DP 50%), maka sisa tagihan akan dihitung otomatis.</p>
+          </div>
+
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- TAB 4: DATA KLIEN, NOMOR STRUK & PEMBAYARAN                    -->
+        <!-- ============================================================== -->
+        <div id="tab-panel-payment" class="hidden space-y-5">
+          
+          <!-- Metadata Transaksi -->
+          <div class="space-y-3">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">Detail Dokumen & Transaksi</label>
+            
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Label Judul Dokumen</label>
+                <input type="text" id="input-doc-title" value="RECEIPT / KWITANSI" oninput="updateState('docTitle', this.value)" class="w-full px-3 py-2 text-xs font-semibold bg-white border border-slate-300 rounded-xl" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">No. Struk / Referensi</label>
+                <div class="flex gap-1">
+                  <input type="text" id="input-receipt-no" value="INV-2026-0842" oninput="updateState('receiptNo', this.value)" class="w-full px-3 py-2 text-xs font-mono bg-white border border-slate-300 rounded-xl" />
+                  <button onclick="generateNewReceiptNo()" title="Generate Nomor Baru" class="px-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl border border-slate-300 text-xs">🎲</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Tanggal Transaksi</label>
+                <input type="date" id="input-date" onchange="updateState('date', this.value)" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Status Pembayaran</label>
+                <select id="input-status" onchange="updateState('paymentStatus', this.value)" class="w-full px-3 py-2 text-xs font-semibold bg-white border border-slate-300 rounded-xl">
+                  <option value="LUNAS">✅ LUNAS (PAID)</option>
+                  <option value="DP 50%">🌗 DP / TERMIN (PARTIAL)</option>
+                  <option value="BELUM LUNAS">⏳ MENUNGGU PELUNASAN</option>
+                  <option value="VERIFIED">🛡️ VERIFIED & SETTLED</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Data Klien & Proyek -->
+          <div class="pt-4 border-t border-slate-100 space-y-3">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">Informasi Klien & Proyek</label>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Nama Klien / Perusahaan</label>
+                <input type="text" id="input-client-name" value="PT Nusantara Digital Kreatif" oninput="updateState('clientName', this.value)" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Kontak / PIC Klien</label>
+                <input type="text" id="input-client-contact" value="Bpk. Reza Mahendra (0811-4490-221)" oninput="updateState('clientContact', this.value)" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Nama Proyek / Repository</label>
+              <input type="text" id="input-project-name" value="Sistem ERP & E-Commerce B2B v2.0" oninput="updateState('projectName', this.value)" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl" />
+            </div>
+          </div>
+
+          <!-- Metode Pembayaran & Catatan -->
+          <div class="pt-4 border-t border-slate-100 space-y-3">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500">Metode Bayar & Catatan Footer</label>
+            
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Metode Pembayaran</label>
+              <input type="text" id="input-payment-method" value="Transfer Bank BCA • 7890441290 a.n. Wendy Pratama" oninput="updateState('paymentMethod', this.value)" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Catatan / Garansi / Link Verifikasi QR</label>
+              <textarea id="input-footer-note" rows="2" oninput="updateState('footerNote', this.value)" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl">Termasuk garansi maintenance bug minor selama 30 hari setelah serah terima source code.</textarea>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Teks / URL di dalam QR Code</label>
+              <input type="text" id="input-qr-text" value="https://wndys.dev/verify/INV-2026-0842" oninput="updateState('qrText', this.value)" class="w-full px-3 py-2 text-xs font-mono bg-white border border-slate-300 rounded-xl" />
+            </div>
+          </div>
+
+          <!-- Backup / Reset Data -->
+          <div class="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
+            <button onclick="resetAllDefault()" class="px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl border border-rose-200 transition">
+              🔄 Reset ke Default
+            </button>
+            <span class="text-[11px] text-slate-400">Otomatis tersimpan di browser</span>
+          </div>
+
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- RIGHT MAIN CANVAS: LIVE PREVIEW -->
+    <main id="preview-wrapper" class="flex-1 canvas-grid-bg relative flex flex-col items-center overflow-auto p-4 sm:p-8 lg:p-10 min-h-[70vh]">
+      
+      <!-- Floating Zoom & Quick Info Toolbar -->
+      <div class="no-print sticky top-0 z-20 mb-6 bg-white/90 backdrop-blur-md border border-slate-200/90 shadow-sm rounded-2xl px-3.5 py-2 flex flex-wrap items-center justify-center gap-3 text-xs">
+        <div class="flex items-center gap-1.5 text-slate-600">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="font-semibold">Live Preview</span>
+        </div>
+        <span class="text-slate-300">|</span>
+        <div class="flex items-center gap-1.5">
+          <button onclick="changeZoom(-0.1)" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-slate-700 flex items-center justify-center transition">−</button>
+          <span id="zoom-level-label" class="font-mono font-semibold text-slate-700 w-12 text-center">100%</span>
+          <button onclick="changeZoom(0.1)" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-slate-700 flex items-center justify-center transition">+</button>
+          <button onclick="resetZoom()" class="px-2 py-1 rounded-lg text-[11px] font-medium text-slate-500 hover:bg-slate-100 transition">Fit</button>
+        </div>
+        <span class="text-slate-300 hidden sm:inline">|</span>
+        <span id="toolbar-size-info" class="hidden sm:inline font-mono text-[11px] text-slate-500">A5 (148mm × Auto)</span>
+      </div>
+
+      <!-- Zoom Container & Actual Printable Receipt Sheet -->
+      <div id="receipt-zoom-container" class="transition-transform duration-200 pb-12">
+        <div id="receipt-sheet" class="bg-white shadow-2xl mx-auto overflow-hidden text-slate-900 relative">
+          <!-- Konten Receipt Dirender Dinamis oleh JavaScript -->
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- JAVASCRIPT APPLICATION LOGIC                                         -->
+  <!-- ==================================================================== -->
+  <script>
+    // ----------------------------------------------------------------------
+    // 1. KONFIGURASI PRESET LAYOUT & UKURAN KERTAS
+    // ----------------------------------------------------------------------
+    const LAYOUT_TEMPLATES = [
+      {
+        id: 'modern-studio',
+        name: 'Modern Studio',
+        desc: 'Clean agency receipt, border halus & rapi',
+        badge: 'Populer',
+        icon: '✨'
+      },
+      {
+        id: 'thermal-pos',
+        name: 'Thermal POS 58/80',
+        desc: 'Struk kasir monospace klasik & garis putus',
+        badge: 'Kasir / Mini',
+        icon: '🧾'
+      },
+      {
+        id: 'saas-dark-header',
+        name: 'SaaS Dark Banner',
+        desc: 'Header gelap kontras tinggi + aksen modern',
+        badge: 'Tech / SaaS',
+        icon: '🚀'
+      },
+      {
+        id: 'dev-terminal',
+        name: 'Dev Git / Terminal',
+        desc: 'Gaya kode JSON & git commit hash untuk geek',
+        badge: 'Developer',
+        icon: '💻'
+      },
+      {
+        id: 'classic-kwitansi',
+        name: 'Kwitansi Resmi ID',
+        desc: 'Format "Telah Terima Dari" + kotak materai',
+        badge: 'Formal / B2B',
+        icon: '🏛️'
+      },
+      {
+        id: 'fintech-ticket',
+        name: 'Fintech Split Card',
+        desc: 'Gaya struk modern ala Stripe / Wise / Bank',
+        badge: 'Fintech',
+        icon: '💳'
+      },
+      {
+        id: 'swiss-editorial',
+        name: 'Swiss Grid Bold',
+        desc: 'Tipografi tegas, garis grid & nomor besar',
+        badge: 'Editorial',
+        icon: '📐'
+      }
+    ];
+
+    const PAPER_PRESETS = [
+      { id: 'thermal58', name: 'Thermal 58mm', width: 58, height: 140, autoHeight: true, padding: 12, suggestedLayout: 'thermal-pos' },
+      { id: 'thermal80', name: 'Thermal 80mm', width: 80, height: 160, autoHeight: true, padding: 16, suggestedLayout: 'thermal-pos' },
+      { id: 'a6', name: 'A6 Mini', width: 105, height: 148, autoHeight: true, padding: 18 },
+      { id: 'a5', name: 'A5 Standar', width: 148, height: 210, autoHeight: true, padding: 24 },
+      { id: 'a4', name: 'A4 Besar', width: 210, height: 297, autoHeight: false, padding: 34 },
+      { id: 'kwitansi-wide', name: 'Kwitansi Landscape', width: 210, height: 115, autoHeight: false, padding: 24, suggestedLayout: 'classic-kwitansi' }
+    ];
+
+    // ----------------------------------------------------------------------
+    // 2. STATE APLIKASI DEFAULT
+    // ----------------------------------------------------------------------
+    const DEFAULT_STATE = {
+      layout: 'modern-studio',
+      accentColor: '#f59e0b',
+      paperPreset: 'a5',
+      paperWidth: 148,
+      paperHeight: 210,
+      autoHeight: true,
+      paperPadding: 24,
+
+      // Elemen Tampilan
+      showQR: true,
+      showStamp: true,
+      showSignature: true,
+      showNotes: true,
+
+      // Logo & Studio
+      logoMode: 'image', // 'image' | 'monogram' | 'hidden'
+      logoDataUrl: '',
+      logoSize: 44,
+      logoShape: 'rounded', // 'rounded' | 'circle' | 'none'
+      studioName: 'WNDYS Dev Studio',
+      studioTagline: 'Web & Mobile App Engineering',
+      studioEmail: 'hello@wndys.dev • wndys.dev',
+      studioPhone: '+62 812-5540-8890',
+      studioAddress: 'Jl. Ahmad Yani Km. 4,5 No. 88, Banjarmasin',
+      signerName: 'Wendy Pratama, S.Kom',
+      signerRole: 'Lead Full-Stack Developer',
+
+      // Dokumen & Klien
+      docTitle: 'PAYMENT RECEIPT',
+      receiptNo: 'INV-2026-0842',
+      date: new Date().toISOString().split('T')[0],
+      paymentStatus: 'LUNAS',
+      clientName: 'PT Nusantara Digital Kreatif',
+      clientContact: 'Bpk. Reza Mahendra (0811-4490-221)',
+      projectName: 'Sistem ERP & E-Commerce B2B v2.0',
+      paymentMethod: 'Transfer Bank BCA • 7890441290 a.n. Wendy Pratama',
+      footerNote: 'Termasuk garansi maintenance bug minor selama 30 hari setelah serah terima repository.',
+      qrText: 'https://wndys.dev/verify/INV-2026-0842',
+
+      // Keuangan & Item
+      currency: 'IDR',
+      taxPercent: 0,
+      discountAmount: 0,
+      paidAmount: 0,
+      items: [
+        {
+          id: 1,
+          title: 'Pengembangan Web App & Admin Dashboard',
+          desc: 'Stack: Next.js, Laravel REST API, PostgreSQL & Role Management',
+          qty: 1,
+          price: 4500000
+        },
+        {
+          id: 2,
+          title: 'Integrasi Payment Gateway (QRIS & VA)',
+          desc: 'Webhook otomatis, verifikasi pembayaran & notifikasi WhatsApp',
+          qty: 1,
+          price: 1200000
+        },
+        {
+          id: 3,
+          title: 'Deploy Cloud VPS, SSL & Domain .COM (1 Tahun)',
+          desc: 'Setup Ubuntu Nginx, Firewall, SSL Auto-Renew & Daily Backup',
+          qty: 1,
+          price: 800000
+        }
+      ]
+    };
+
+    let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+    let currentZoom = 1.0;
+
+    // ----------------------------------------------------------------------
+    // 3. INISIALISASI & LOCAL STORAGE
+    // ----------------------------------------------------------------------
+    function initApp() {
+      // Muat dari localStorage jika tersedia
+      try {
+        const saved = localStorage.getItem('devreceipt_studio_state_v1');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          state = { ...DEFAULT_STATE, ...parsed };
+        }
+      } catch (e) {
+        console.warn('Gagal memuat state dari localStorage:', e);
+      }
+
+      renderLayoutCards();
+      renderPaperPresets();
+      syncInputsWithState();
+      renderItemsEditor();
+      renderReceipt();
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem('devreceipt_studio_state_v1', JSON.stringify(state));
+      } catch (e) {
+        // Abaikan jika quota localStorage penuh (misal gambar logo terlalu besar)
+      }
+    }
+
+    function updateState(key, value) {
+      state[key] = value;
+
+      if (key === 'accentColor') {
+        document.getElementById('accent-hex-label').textContent = value;
+        document.getElementById('input-accent-color').value = value;
+      }
+      if (key === 'paperPadding') {
+        document.getElementById('padding-val-label').textContent = value + 'px';
+      }
+      if (key === 'logoSize') {
+        document.getElementById('logo-size-label').textContent = value + 'px';
+      }
+      if (key === 'receiptNo') {
+        const qrInput = document.getElementById('input-qr-text');
+        if (qrInput && qrInput.value.includes('verify/')) {
+          state.qrText = `https://wndys.dev/verify/${value}`;
+          qrInput.value = state.qrText;
+        }
+      }
+
+      saveState();
+      renderReceipt();
+    }
+
+    function syncInputsWithState() {
+      document.getElementById('input-accent-color').value = state.accentColor;
+      document.getElementById('accent-hex-label').textContent = state.accentColor;
+      document.getElementById('input-paper-width').value = state.paperWidth;
+      document.getElementById('input-paper-height').value = state.paperHeight;
+      document.getElementById('input-auto-height').checked = state.autoHeight;
+      document.getElementById('input-paper-height').disabled = state.autoHeight;
+      document.getElementById('input-paper-padding').value = state.paperPadding;
+      document.getElementById('padding-val-label').textContent = state.paperPadding + 'px';
+
+      document.getElementById('toggle-qr').checked = state.showQR;
+      document.getElementById('toggle-stamp').checked = state.showStamp;
+      document.getElementById('toggle-signature').checked = state.showSignature;
+      document.getElementById('toggle-notes').checked = state.showNotes;
+
+      document.getElementById('input-logo-mode').value = state.logoMode;
+      document.getElementById('input-logo-size').value = state.logoSize;
+      document.getElementById('logo-size-label').textContent = state.logoSize + 'px';
+      document.getElementById('input-logo-shape').value = state.logoShape;
+      updateSidebarLogoPreview();
+
+      document.getElementById('input-studio-name').value = state.studioName;
+      document.getElementById('input-studio-tagline').value = state.studioTagline;
+      document.getElementById('input-studio-email').value = state.studioEmail;
+      document.getElementById('input-studio-phone').value = state.studioPhone;
+      document.getElementById('input-studio-address').value = state.studioAddress;
+      document.getElementById('input-signer-name').value = state.signerName;
+      document.getElementById('input-signer-role').value = state.signerRole;
+
+      document.getElementById('input-doc-title').value = state.docTitle;
+      document.getElementById('input-receipt-no').value = state.receiptNo;
+      document.getElementById('input-date').value = state.date;
+      document.getElementById('input-status').value = state.paymentStatus;
+      document.getElementById('input-client-name').value = state.clientName;
+      document.getElementById('input-client-contact').value = state.clientContact;
+      document.getElementById('input-project-name').value = state.projectName;
+      document.getElementById('input-payment-method').value = state.paymentMethod;
+      document.getElementById('input-footer-note').value = state.footerNote;
+      document.getElementById('input-qr-text').value = state.qrText;
+
+      document.getElementById('input-currency').value = state.currency;
+      document.getElementById('input-tax').value = state.taxPercent;
+      document.getElementById('input-discount').value = state.discountAmount;
+      document.getElementById('input-paid-amount').value = state.paidAmount;
+    }
+
+    // ----------------------------------------------------------------------
+    // 4. NAVIGASI TAB & UI CONTROLS
+    // ----------------------------------------------------------------------
+    function switchTab(tabName) {
+      const tabs = ['layout', 'brand', 'items', 'payment'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab-btn-${t}`);
+        const panel = document.getElementById(`tab-panel-${t}`);
+        if (t === tabName) {
+          btn.classList.add('active');
+          btn.classList.remove('text-slate-600', 'hover:bg-slate-200/70');
+          panel.classList.remove('hidden');
+        } else {
+          btn.classList.remove('active');
+          btn.classList.add('text-slate-600', 'hover:bg-slate-200/70');
+          panel.classList.add('hidden');
+        }
+      });
+    }
+
+    function renderLayoutCards() {
+      const grid = document.getElementById('layout-cards-grid');
+      grid.innerHTML = LAYOUT_TEMPLATES.map(tpl => {
+        const isActive = state.layout === tpl.id;
+        return `
+          <button onclick="selectLayout('${tpl.id}')"
+            class="text-left p-3 rounded-2xl border transition-all relative flex flex-col justify-between gap-1.5 ${
+              isActive
+                ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-amber-400/70'
+                : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-slate-300'
+            }">
+            <div class="flex items-center justify-between w-full">
+              <span class="text-base">${tpl.icon}</span>
+              <span class="text-[10px] font-mono px-1.5 py-0.5 rounded-md ${
+                isActive ? 'bg-amber-400 text-slate-950 font-bold' : 'bg-slate-100 text-slate-500'
+              }">${tpl.badge}</span>
+            </div>
+            <div>
+              <div class="text-xs font-bold leading-snug">${tpl.name}</div>
+              <div class="text-[10px] leading-tight mt-0.5 ${isActive ? 'text-slate-300' : 'text-slate-500'}">${tpl.desc}</div>
+            </div>
+          </button>
+        `;
+      }).join('');
+
+      const currentTpl = LAYOUT_TEMPLATES.find(t => t.id === state.layout);
+      if (currentTpl) {
+        document.getElementById('active-layout-badge').textContent = currentTpl.name;
+      }
+    }
+
+    function selectLayout(layoutId) {
+      state.layout = layoutId;
+      renderLayoutCards();
+      saveState();
+      renderReceipt();
+    }
+
+    function setAccentColor(hex) {
+      updateState('accentColor', hex);
+    }
+
+    function renderPaperPresets() {
+      const grid = document.getElementById('paper-presets-grid');
+      grid.innerHTML = PAPER_PRESETS.map(p => {
+        const isActive = state.paperPreset === p.id;
+        return `
+          <button onclick="selectPaperPreset('${p.id}')"
+            class="p-2.5 rounded-xl border text-left transition ${
+              isActive
+                ? 'bg-amber-50 border-amber-500 text-slate-900 ring-1 ring-amber-500'
+                : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+            }">
+            <div class="text-xs font-bold truncate">${p.name}</div>
+            <div class="text-[10px] font-mono text-slate-500 mt-0.5">${p.width}×${p.autoHeight ? 'Auto' : p.height}mm</div>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectPaperPreset(presetId) {
+      const preset = PAPER_PRESETS.find(p => p.id === presetId);
+      if (!preset) return;
+
+      state.paperPreset = presetId;
+      state.paperWidth = preset.width;
+      state.paperHeight = preset.height;
+      state.autoHeight = preset.autoHeight;
+      state.paperPadding = preset.padding;
+
+      document.getElementById('input-paper-width').value = preset.width;
+      document.getElementById('input-paper-height').value = preset.height;
+      document.getElementById('input-auto-height').checked = preset.autoHeight;
+      document.getElementById('input-paper-height').disabled = preset.autoHeight;
+      document.getElementById('input-paper-padding').value = preset.padding;
+      document.getElementById('padding-val-label').textContent = preset.padding + 'px';
+
+      renderPaperPresets();
+      saveState();
+      renderReceipt();
+      showToast(`Ukuran kertas diubah ke ${preset.name}`);
+    }
+
+    function toggleAutoHeight(isAuto) {
+      state.autoHeight = isAuto;
+      state.paperPreset = 'custom';
+      document.getElementById('input-paper-height').disabled = isAuto;
+      renderPaperPresets();
+      saveState();
+      renderReceipt();
+    }
+
+    function updatePaperCustom() {
+      const w = parseInt(document.getElementById('input-paper-width').value) || 80;
+      const h = parseInt(document.getElementById('input-paper-height').value) || 150;
+      state.paperPreset = 'custom';
+      state.paperWidth = Math.max(45, Math.min(400, w));
+      state.paperHeight = Math.max(50, Math.min(600, h));
+      renderPaperPresets();
+      saveState();
+      renderReceipt();
+    }
+
+    // ----------------------------------------------------------------------
+    // 5. UPLOAD & MANAJEMEN LOGO CUSTOM
+    // ----------------------------------------------------------------------
+    function handleLogoUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        state.logoDataUrl = e.target.result;
+        state.logoMode = 'image';
+        document.getElementById('input-logo-mode').value = 'image';
+        updateSidebarLogoPreview();
+        saveState();
+        renderReceipt();
+        showToast('Logo berhasil diunggah!');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeCustomLogo() {
+      state.logoDataUrl = '';
+      document.getElementById('input-logo-file').value = '';
+      updateSidebarLogoPreview();
+      saveState();
+      renderReceipt();
+      showToast('Logo kustom dihapus, kembali ke monogram.');
+    }
+
+    function updateSidebarLogoPreview() {
+      const box = document.getElementById('sidebar-logo-preview');
+      const removeBtn = document.getElementById('btn-remove-logo');
+      if (state.logoDataUrl) {
+        box.innerHTML = `<img src="${state.logoDataUrl}" alt="Logo Preview" class="w-full h-full object-contain p-1" />`;
+        removeBtn.classList.remove('hidden');
+      } else {
+        const initials = getInitials(state.studioName);
+        box.innerHTML = `<span class="font-mono font-bold text-slate-800 text-base">${initials}</span>`;
+        removeBtn.classList.add('hidden');
+      }
+    }
+
+    function getInitials(name) {
+      if (!name) return '</>';
+      const words = name.trim().split(/\s+/);
+      if (words.length === 1) return words[0].substring(0, 3).toUpperCase();
+      return (words[0][0] + words[1][0]).toUpperCase();
+    }
+
+    function renderLogoHTML(darkBg = false) {
+      if (state.logoMode === 'hidden') return '';
+
+      const size = state.logoSize;
+      const shapeClass =
+        state.logoShape === 'circle'
+          ? 'rounded-full'
+          : state.logoShape === 'rounded'
+          ? 'rounded-xl'
+          : 'rounded-none';
+
+      if (state.logoMode === 'image' && state.logoDataUrl) {
+        return `
+          <div style="width:${size}px; height:${size}px;" class="${shapeClass} overflow-hidden flex items-center justify-center shrink-0 ${
+          state.logoShape !== 'none' ? (darkBg ? 'bg-white/10 p-1' : 'bg-white border border-slate-200/80 p-1') : ''
+        }">
+            <img src="${state.logoDataUrl}" alt="Logo" class="w-full h-full object-contain" />
+          </div>
+        `;
+      }
+
+      // Monogram Fallback
+      const initials = getInitials(state.studioName);
+      return `
+        <div style="width:${size}px; height:${size}px; background-color:${darkBg ? state.accentColor : '#0f172a'}; color:${
+        darkBg ? '#0f172a' : state.accentColor
+      }; font-size:${Math.max(12, Math.round(size * 0.36))}px;"
+          class="${shapeClass} font-mono font-bold flex items-center justify-center shrink-0 shadow-xs">
+          ${escapeHtml(initials)}
+        </div>
+      `;
+    }
+
+    // ----------------------------------------------------------------------
+    // 6. MANAJEMEN ITEM LAYANAN DEVELOPER
+    // ----------------------------------------------------------------------
+    function renderItemsEditor() {
+      const container = document.getElementById('items-editor-list');
+      if (state.items.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-6 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-300 text-xs text-slate-500">
+            Belum ada item layanan. Klik <b>"+ Tambah Baris"</b> atau pilih chip layanan cepat di atas.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = state.items.map((item, idx) => `
+        <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5 relative group">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[11px] font-mono font-bold text-slate-400">#${idx + 1}</span>
+            <div class="flex items-center gap-1">
+              ${idx > 0 ? `<button onclick="moveItem(${idx}, -1)" title="Geser Atas" class="p-1 text-slate-400 hover:text-slate-700 text-xs">↑</button>` : ''}
+              ${idx < state.items.length - 1 ? `<button onclick="moveItem(${idx}, 1)" title="Geser Bawah" class="p-1 text-slate-400 hover:text-slate-700 text-xs">↓</button>` : ''}
+              <button onclick="removeItem(${item.id})" title="Hapus Item" class="p-1 text-rose-400 hover:text-rose-600 text-xs font-bold ml-1">✕</button>
+            </div>
+          </div>
+
+          <input type="text" value="${escapeAttr(item.title)}" placeholder="Nama Layanan / Modul (misal: Backend API)"
+            oninput="updateItem(${item.id}, 'title', this.value)"
+            class="w-full px-3 py-1.5 text-xs font-semibold bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500" />
+
+          <input type="text" value="${escapeAttr(item.desc)}" placeholder="Detail teknis / Tech stack (opsional)"
+            oninput="updateItem(${item.id}, 'desc', this.value)"
+            class="w-full px-3 py-1.5 text-[11px] bg-white border border-slate-300 rounded-xl text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500" />
+
+          <div class="grid grid-cols-12 gap-2 items-center">
+            <div class="col-span-4">
+              <label class="block text-[10px] text-slate-500 mb-0.5">Qty / Jam</label>
+              <input type="number" min="0.1" step="any" value="${item.qty}"
+                oninput="updateItem(${item.id}, 'qty', parseFloat(this.value) || 0)"
+                class="w-full px-2.5 py-1.5 text-xs font-mono bg-white border border-slate-300 rounded-xl" />
+            </div>
+            <div class="col-span-8">
+              <label class="block text-[10px] text-slate-500 mb-0.5">Harga Satuan</label>
+              <input type="number" min="0" step="any" value="${item.price}"
+                oninput="updateItem(${item.id}, 'price', parseFloat(this.value) || 0)"
+                class="w-full px-2.5 py-1.5 text-xs font-mono bg-white border border-slate-300 rounded-xl" />
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addNewItem() {
+      state.items.push({
+        id: Date.now() + Math.random(),
+        title: 'Pengembangan Fitur Modul Baru',
+        desc: 'Implementasi logic, testing & integrasi database',
+        qty: 1,
+        price: 1500000
+      });
+      renderItemsEditor();
+      saveState();
+      renderReceipt();
+    }
+
+    function quickAddItem(title, desc, qty, price) {
+      state.items.push({
+        id: Date.now() + Math.random(),
+        title,
+        desc,
+        qty,
+        price
+      });
+      renderItemsEditor();
+      saveState();
+      renderReceipt();
+      showToast(`Ditambahkan: ${title}`);
+    }
+
+    function updateItem(id, field, value) {
+      const item = state.items.find(i => i.id === id);
+      if (item) {
+        item[field] = value;
+        saveState();
+        renderReceipt();
+      }
+    }
+
+    function removeItem(id) {
+      state.items = state.items.filter(i => i.id !== id);
+      renderItemsEditor();
+      saveState();
+      renderReceipt();
+    }
+
+    function moveItem(index, dir) {
+      const target = index + dir;
+      if (target < 0 || target >= state.items.length) return;
+      const temp = state.items[index];
+      state.items[index] = state.items[target];
+      state.items[target] = temp;
+      renderItemsEditor();
+      saveState();
+      renderReceipt();
+    }
+
+    // ----------------------------------------------------------------------
+    // 7. HELPER KALKULASI, FORMAT MATA UANG & TERBILANG
+    // ----------------------------------------------------------------------
+    function calculateTotals() {
+      const subtotal = state.items.reduce((sum, item) => sum + (Number(item.qty) || 0) * (Number(item.price) || 0), 0);
+      const discount = Math.min(subtotal, Number(state.discountAmount) || 0);
+      const afterDiscount = Math.max(0, subtotal - discount);
+      const taxAmount = afterDiscount * ((Number(state.taxPercent) || 0) / 100);
+      const grandTotal = afterDiscount + taxAmount;
+      const paid = Number(state.paidAmount) || 0;
+      const balanceDue = paid > 0 ? Math.max(0, grandTotal - paid) : 0;
+
+      return {
+        subtotal,
+        discount,
+        taxAmount,
+        grandTotal,
+        paid,
+        balanceDue
+      };
+    }
+
+    function formatMoney(amount) {
+      const num = Number(amount) || 0;
+      if (state.currency === 'USD') {
+        return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+      return 'Rp ' + Math.round(num).toLocaleString('id-ID');
+    }
+
+    function formatDateReadable(dateStr) {
+      if (!dateStr) return '-';
+      try {
+        const d = new Date(dateStr + 'T00:00:00');
+        return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+      } catch {
+        return dateStr;
+      }
+    }
+
+    // Fungsi Terbilang Bahasa Indonesia (untuk Layout Kwitansi Resmi)
+    function terbilangID(nilai) {
+      nilai = Math.floor(Math.abs(nilai));
+      if (nilai === 0) return 'Nol Rupiah';
+      const huruf = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh', 'Sebelas'];
+      function convert(n) {
+        if (n < 12) return ' ' + huruf[n];
+        if (n < 20) return convert(n - 10) + ' Belas';
+        if (n < 100) return convert(Math.floor(n / 10)) + ' Puluh' + convert(n % 10);
+        if (n < 200) return ' Seratus' + convert(n - 100);
+        if (n < 1000) return convert(Math.floor(n / 100)) + ' Ratus' + convert(n % 100);
+        if (n < 2000) return ' Seribu' + convert(n - 1000);
+        if (n < 1000000) return convert(Math.floor(n / 1000)) + ' Ribu' + convert(n % 1000);
+        if (n < 1000000000) return convert(Math.floor(n / 1000000)) + ' Juta' + convert(n % 1000000);
+        if (n < 1000000000000) return convert(Math.floor(n / 1000000000)) + ' Miliar' + convert(n % 1000000000);
+        return '';
+      }
+      const suffix = state.currency === 'USD' ? ' US Dollar' : ' Rupiah';
+      return (convert(nilai).trim() + suffix).replace(/\s+/g, ' ');
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function escapeAttr(str) {
+      return escapeHtml(str);
+    }
+
+    // ----------------------------------------------------------------------
+    // 8. RENDER ENGINE UTAMA (7 TEMPLATE RECEIPT BERBEDA)
+    // ----------------------------------------------------------------------
+    function renderReceipt() {
+      const sheet = document.getElementById('receipt-sheet');
+      const totals = calculateTotals();
+      const isCompact = state.paperWidth <= 90; // Deteksi otomatis kertas kecil (58mm/80mm)
+
+      // Set Dimensi Kertas Fisik (mm)
+      sheet.style.width = `${state.paperWidth}mm`;
+      if (state.autoHeight) {
+        sheet.style.minHeight = 'auto';
+        sheet.style.height = 'auto';
+      } else {
+        sheet.style.minHeight = `${state.paperHeight}mm`;
+      }
+
+      // Update Print CSS Rules secara dinamis
+      const printStyleEl = document.getElementById('dynamic-print-style');
+      const pageSizeCSS = state.autoHeight
+        ? `${state.paperWidth}mm auto`
+        : `${state.paperWidth}mm ${state.paperHeight}mm`;
+      printStyleEl.innerHTML = `
+        @media print {
+          @page {
+            size: ${pageSizeCSS};
+            margin: 0;
+          }
+          #receipt-sheet {
+            width: ${state.paperWidth}mm !important;
+            ${state.autoHeight ? '' : `min-height: ${state.paperHeight}mm !important;`}
+          }
+        }
+      `;
+
+      // Update label informasi ukuran di UI
+      const dimLabel = `${state.paperWidth}mm × ${state.autoHeight ? 'Auto' : state.paperHeight + 'mm'}`;
+      document.getElementById('paper-dimension-badge').textContent = dimLabel;
+      document.getElementById('toolbar-size-info').textContent = `Kertas: ${dimLabel}`;
+
+      // Pilih Template Renderer
+      let html = '';
+      switch (state.layout) {
+        case 'thermal-pos':
+          html = buildThermalPOSLayout(totals, isCompact);
+          break;
+        case 'saas-dark-header':
+          html = buildSaasDarkHeaderLayout(totals, isCompact);
+          break;
+        case 'dev-terminal':
+          html = buildDevTerminalLayout(totals, isCompact);
+          break;
+        case 'classic-kwitansi':
+          html = buildClassicKwitansiLayout(totals, isCompact);
+          break;
+        case 'fintech-ticket':
+          html = buildFintechTicketLayout(totals, isCompact);
+          break;
+        case 'swiss-editorial':
+          html = buildSwissEditorialLayout(totals, isCompact);
+          break;
+        case 'modern-studio':
+        default:
+          html = buildModernStudioLayout(totals, isCompact);
+          break;
+      }
+
+      sheet.innerHTML = html;
+
+      // Render QR Code jika diaktifkan
+      if (state.showQR) {
+        const qrContainer = document.getElementById('receipt-qr-target');
+        if (qrContainer && typeof QRCode !== 'undefined') {
+          qrContainer.innerHTML = '';
+          const qrSize = isCompact ? 54 : 66;
+          new QRCode(qrContainer, {
+            text: state.qrText || state.receiptNo,
+            width: qrSize,
+            height: qrSize,
+            colorDark: state.layout === 'dev-terminal' ? '#f8fafc' : '#0f172a',
+            colorLight: state.layout === 'dev-terminal' ? '#0f172a' : '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+          });
+        }
+      }
+    }
+
+    // ----------------------------------------------------------------------
+    // TEMPLATE 1: MODERN STUDIO (Clean Agency / Freelancer)
+    // ----------------------------------------------------------------------
+    function buildModernStudioLayout(totals, isCompact) {
+      const pad = state.paperPadding;
+      const baseText = isCompact ? 'text-[10px]' : 'text-xs';
+
+      return `
+        <div style="padding:${pad}px;" class="${baseText} text-slate-800 flex flex-col justify-between h-full">
+          <!-- Top Accent Bar -->
+          <div style="background-color:${state.accentColor};" class="h-1.5 w-full rounded-full mb-5"></div>
+
+          <!-- Header Studio & Receipt Info -->
+          <div class="flex ${isCompact ? 'flex-col gap-3' : 'items-start justify-between gap-4'} pb-4 border-b border-slate-200">
+            <div class="flex items-center gap-3">
+              ${renderLogoHTML(false)}
+              <div>
+                <h2 class="font-extrabold text-slate-900 ${isCompact ? 'text-sm' : 'text-base'} tracking-tight">${escapeHtml(state.studioName)}</h2>
+                <p class="text-slate-500 ${isCompact ? 'text-[9px]' : 'text-[11px]'} font-medium">${escapeHtml(state.studioTagline)}</p>
+                <p class="text-slate-400 text-[10px] mt-0.5">${escapeHtml(state.studioEmail)}</p>
+              </div>
+            </div>
+
+            <div class="${isCompact ? 'text-left' : 'text-right'} shrink-0">
+              <span style="color:${state.accentColor};" class="font-mono font-bold uppercase tracking-widest text-[10px] block">${escapeHtml(state.docTitle)}</span>
+              <div class="font-mono font-bold text-slate-900 ${isCompact ? 'text-xs' : 'text-sm'} mt-0.5">#${escapeHtml(state.receiptNo)}</div>
+              <div class="text-slate-500 text-[10px] mt-0.5">Tgl: ${formatDateReadable(state.date)}</div>
+            </div>
+          </div>
+
+          <!-- Client & Project Meta -->
+          <div class="grid ${isCompact ? 'grid-cols-1 gap-2' : 'grid-cols-2 gap-4'} py-3.5 border-b border-slate-100">
+            <div>
+              <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400 block">Diterima Dari (Klien)</span>
+              <div class="font-bold text-slate-900 mt-0.5">${escapeHtml(state.clientName)}</div>
+              <div class="text-slate-500 text-[10px]">${escapeHtml(state.clientContact)}</div>
+            </div>
+            <div class="${isCompact ? '' : 'text-right'}">
+              <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400 block">Proyek / Deliverable</span>
+              <div class="font-semibold text-slate-800 mt-0.5">${escapeHtml(state.projectName)}</div>
+              ${state.showStamp ? `
+                <span style="border-color:${state.accentColor}; color:#0f172a; background-color:${state.accentColor}22;"
+                  class="inline-block mt-1 px-2 py-0.5 rounded-md border font-mono font-bold text-[10px]">
+                  ${escapeHtml(state.paymentStatus)}
+                </span>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- Items Table -->
+          <div class="py-3">
+            <div class="flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 pb-2 border-b border-slate-200">
+              <span>Deskripsi Layanan</span>
+              <span>Total</span>
+            </div>
+            <div class="divide-y divide-slate-100">
+              ${state.items.map(item => `
+                <div class="py-2.5 flex justify-between items-start gap-3">
+                  <div class="flex-1">
+                    <div class="font-bold text-slate-900">${escapeHtml(item.title)}</div>
+                    ${item.desc ? `<div class="text-slate-500 text-[10px] leading-snug mt-0.5">${escapeHtml(item.desc)}</div>` : ''}
+                    <div class="font-mono text-[10px] text-slate-400 mt-0.5">${item.qty} × ${formatMoney(item.price)}</div>
+                  </div>
+                  <div class="font-mono font-semibold text-slate-900 shrink-0">
+                    ${formatMoney(item.qty * item.price)}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Totals Summary -->
+          <div class="pt-3 border-t border-slate-200 flex flex-col items-end space-y-1.5">
+            <div class="w-full ${isCompact ? '' : 'max-w-[230px]'} space-y-1">
+              <div class="flex justify-between text-slate-500">
+                <span>Subtotal</span>
+                <span class="font-mono">${formatMoney(totals.subtotal)}</span>
+              </div>
+              ${totals.discount > 0 ? `
+                <div class="flex justify-between text-emerald-600">
+                  <span>Diskon</span>
+                  <span class="font-mono">-${formatMoney(totals.discount)}</span>
+                </div>
+              ` : ''}
+              ${totals.taxAmount > 0 ? `
+                <div class="flex justify-between text-slate-500">
+                  <span>PPN (${state.taxPercent}%)</span>
+                  <span class="font-mono">${formatMoney(totals.taxAmount)}</span>
+                </div>
+              ` : ''}
+              <div style="border-color:${state.accentColor};" class="flex justify-between items-center pt-2 border-t-2 font-extrabold text-slate-900 ${isCompact ? 'text-xs' : 'text-sm'}">
+                <span>TOTAL</span>
+                <span class="font-mono">${formatMoney(totals.grandTotal)}</span>
+              </div>
+              ${totals.paid > 0 ? `
+                <div class="flex justify-between text-[10px] text-slate-600 pt-1">
+                  <span>Telah Dibayar (DP)</span>
+                  <span class="font-mono font-semibold">${formatMoney(totals.paid)}</span>
+                </div>
+                <div class="flex justify-between text-[11px] font-bold text-amber-700">
+                  <span>Sisa Tagihan</span>
+                  <span class="font-mono">${formatMoney(totals.balanceDue)}</span>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- Footer: Payment Note, QR & Signature -->
+          <div class="mt-6 pt-4 border-t border-dashed border-slate-200 flex ${isCompact ? 'flex-col gap-4' : 'items-end justify-between gap-4'}">
+            <div class="flex items-center gap-3">
+              ${state.showQR ? `<div id="receipt-qr-target" class="p-1 bg-white border border-slate-200 rounded-lg shrink-0"></div>` : ''}
+              ${state.showNotes ? `
+                <div class="text-[10px] text-slate-500 space-y-1">
+                  <div class="font-semibold text-slate-700">${escapeHtml(state.paymentMethod)}</div>
+                  <p class="leading-relaxed">${escapeHtml(state.footerNote)}</p>
+                </div>
+              ` : ''}
+            </div>
+
+            ${state.showSignature ? `
+              <div class="${isCompact ? 'text-left' : 'text-right'} shrink-0">
+                <div class="text-[10px] text-slate-400 mb-6">Authorized Developer,</div>
+                <div class="font-bold text-slate-900 border-t border-slate-300 pt-1">${escapeHtml(state.signerName)}</div>
+                <div class="text-[9px] text-slate-500">${escapeHtml(state.signerRole)}</div>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    // ----------------------------------------------------------------------
+    // TEMPLATE 2: THERMAL POS 58mm / 80mm (Struk Kasir Developer)
+    // ----------------------------------------------------------------------
+    function buildThermalPOSLayout(totals, isCompact) {
+      const pad = Math.min(state.paperPadding, 18);
+      return `
+        <div style="padding:${pad}px;" class="font-mono text-[10px] leading-snug text-slate-900 bg-white">
+          <!-- Center Header -->
+          <div class="text-center space-y-1 pb-3 border-b border-dashed border-slate-400">
+            <div class="flex justify-center mb-1.5">${renderLogoHTML(false)}</div>
+            <div class="font-bold text-xs uppercase tracking-wide">${escapeHtml(state.studioName)}</div>
+            <div class="text-[9px] text-slate-600">${escapeHtml(state.studioTagline)}</div>
+            <div class="text-[9px] text-slate-500">${escapeHtml(state.studioAddress)}</div>
+            <div class="text-[9px] text-slate-500">${escapeHtml(state.studioPhone)}</div>
+          </div>
+
+          <!-- Meta Info -->
+          <div class="py-2.5 border-b border-dashed border-slate-400 space-y-0.5 text-[9px]">
+            <div class="flex justify-between">
+              <span>NO.STRUK:</span>
+              <span class="font-bold">${escapeHtml(state.receiptNo)}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>TANGGAL :</span>
+              <span>${formatDateReadable(state.date)}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>KLIEN   :</span>
+              <span class="font-bold truncate max-w-[140px]">${escapeHtml(state.clientName)}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>PROYEK  :</span>
+              <span class="truncate max-w-[140px]">${escapeHtml(state.projectName)}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>STATUS  :</span>
+              <span class="font-bold">[${escapeHtml(state.paymentStatus)}]</span>
+            </div>
+          </div>
+
+          <!-- Items -->
+          <div class="py-2.5 border-b border-dashed border-slate-400 space-y-2">
+            ${state.items.map(item => `
+              <div>
+                <div class="font-bold">${escapeHtml(item.title)}</div>
+                ${item.desc ? `<div class="text-[9px] text-slate-500">${escapeHtml(item.desc)}</div>` : ''}
+                <div class="flex justify-between mt-0.5">
+                  <span>${item.qty} x ${formatMoney(item.price)}</span>
+                  <span class="font-bold">${formatMoney(item.qty * item.price)}</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Totals -->
+          <div class="py-2.5 border-b border-dashed border-slate-400 space-y-1">
+            <div class="flex justify-between">
+              <span>SUBTOTAL</span>
+              <span>${formatMoney(totals.subtotal)}</span>
+            </div>
+            ${totals.discount > 0 ? `
+              <div class="flex justify-between">
+                <span>DISKON</span>
+                <span>-${formatMoney(totals.discount)}</span>
+              </div>
+            ` : ''}
+            ${totals.taxAmount > 0 ? `
+              <div class="flex justify-between">
+                <span>PPN (${state.taxPercent}%)</span>
+                <span>${formatMoney(totals.taxAmount)}</span>
+              </div>
+            ` : ''}
+            <div class="flex justify-between font-bold text-xs pt-1 border-t border-dotted border-slate-400">
+              <span>TOTAL BAYAR</span>
+              <span>${formatMoney(totals.grandTotal)}</span>
+            </div>
+            ${totals.paid > 0 ? `
+              <div class="flex justify-between text-[9px]">
+                <span>DIBAYAR/DP</span>
+                <span>${formatMoney(totals.paid)}</span>
+              </div>
+              <div class="flex justify-between font-bold text-[10px]">
+                <span>SISA TAGIHAN</span>
+                <span>${formatMoney(totals.balanceDue)}</span>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Footer & QR -->
+          <div class="pt-3 text-center space-y-2">
+            ${state.showNotes ? `
+              <div class="text-[9px] text-slate-600">${escapeHtml(state.paymentMethod)}</div>
+              <div class="text-[9px] text-slate-500">${escapeHtml(state.footerNote)}</div>
+            ` : ''}
+
+            ${state.showQR ? `
+              <div class="flex flex-col items-center pt-1">
+                <div id="receipt-qr-target" class="p-1 bg-white"></div>
+                <span class="text-[8px] text-slate-400 mt-1">SCAN VERIFIKASI DOKUMEN</span>
+              </div>
+            ` : ''}
+
+            <div class="pt-2 text-[9px] font-bold tracking-widest">*** TERIMA KASIH ***</div>
+            <div class="text-[8px] text-slate-400">${escapeHtml(state.studioEmail)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ----------------------------------------------------------------------
+    // TEMPLATE 3: SAAS DARK HEADER BANNER
+    // ----------------------------------------------------------------------
+    function buildSaasDarkHeaderLayout(totals, isCompact) {
+      const pad = state.paperPadding;
+      const baseText = isCompact ? 'text-[10px]' : 'text-xs';
+
+      return `
+        <div class="${baseText} text-slate-800 bg-white">
+          <!-- Dark Hero Banner -->
+          <div style="padding:${pad}px;" class="bg-slate-900 text-white">
+            <div class="flex ${isCompact ? 'flex-col gap-3' : 'items-center justify-between gap-4'}">
+              <div class="flex items-center gap-3">
+                ${renderLogoHTML(true)}
+                <div>
+                  <h2 class="font-extrabold ${isCompact ? 'text-sm' : 'text-base'} tracking-tight text-white">${escapeHtml(state.studioName)}</h2>
+                  <p class="text-slate-400 text-[10px]">${escapeHtml(state.studioTagline)}</p>
+                </div>
+              </div>
+              <div class="${isCompact ? 'text-left' : 'text-right'}">
+                <span style="background-color:${state.accentColor}; color:#0f172a;" class="inline-block px-2.5 py-0.5 rounded-full font-mono font-bold text-[10px] uppercase">
+                  ${escapeHtml(state.paymentStatus)}
+                </span>
+                <div class="font-mono font-bold text-white mt-1.5 ${isCompact ? 'text-xs' : 'text-sm'}">#${escapeHtml(state.receiptNo)}</div>
+              </div>
+            </div>
+
+            <!-- Highlight Total Box inside Dark Header -->
+            <div class="mt-4 pt-3.5 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div class="text-[10px] text-slate-400 uppercase tracking-wider">Total Pembayaran Diterima</div>
+                <div style="color:${state.accentColor};" class="font-mono font-extrabold ${isCompact ? 'text-base' : 'text-xl'} mt-0.5">
+                  ${formatMoney(totals.paid > 0 ? totals.paid : totals.grandTotal)}
+                </div>
+              </div>
+              <div class="${isCompact ? 'text-left' : 'text-right'} text-[10px] text-slate-300">
+                <div>Tanggal: <span class="font-mono text-white">${formatDateReadable(state.date)}</span></div>
+                <div class="mt-0.5">Klien: <span class="font-semibold text-white">${escapeHtml(state.clientName)}</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Body -->
+          <div style="padding:${pad}px;" class="space-y-4">
+            <div class="bg-slate-50 rounded-xl p-3 border border-slate-200/80 flex flex-wrap justify-between gap-2">
+              <div>
+                <span class="text-[10px] text-slate-400 uppercase font-bold block">Proyek</span>
+                <span class="font-bold text-slate-900">${escapeHtml(state.projectName)}</span>
+              </div>
+              <div class="${isCompact ? '' : 'text-right'}">
+                <span class="text-[10px] text-slate-400 uppercase font-bold block">Kontak Klien</span>
+                <span class="text-slate-700">${escapeHtml(state.clientContact)}</span>
+              </div>
+            </div>
+
+            <!-- Items -->
+            <div class="space-y-2">
+              ${state.items.map(item => `
+                <div class="p-2.5 rounded-xl border border-slate-100 bg-white flex justify-between items-start gap-3">
+                  <div>
+                    <div class="font-bold text-slate-900">${escapeHtml(item.title)}</div>
+                    ${item.desc ? `<div class="text-[10px] text-slate-500 mt-0.5">${escapeHtml(item.desc)}</div>` : ''}
+                    <div class="text-[10px] font-mono text-slate-400 mt-1">Qty: ${item.qty} × ${formatMoney(item.price)}</div>
+                  </div>
+                  <div class="font-mono font-bold text-slate-900 shrink-0">${formatMoney(item.qty * item.price)}</div>
+                </div>
+              `).join('')}
+            </div>
+
+            <!-- Summary -->
+            <div class="bg-slate-50 p-3.5 rounded-xl space-y-1.5">
+              <div class="flex justify-between text-slate-500">
+                <span>Subtotal Layanan</span>
+                <span class="font-mono">${formatMoney(totals.subtotal)}</span>
+              </div>
+              ${totals.discount > 0 ? `
+                <div class="flex justify-between text-emerald-600">
+                  <span>Diskon</span>
+                  <span class="font-mono">-${formatMoney(totals.discount)}</span>
+                </div>
+              ` : ''}
+              ${totals.taxAmount > 0 ? `
+                <div class="flex justify-between text-slate-500">
+                  <span>Pajak (${state.taxPercent}%)</span>
+                  <span class="font-mono">${formatMoney(totals.taxAmount)}</span>
+                </div>
+              ` : ''}
+              <div class="flex justify-between font-extrabold text-slate-900 pt-2 border-t border-slate-200">
+                <span>Grand Total</span>
+                <span class="font-mono">${formatMoney(totals.grandTotal)}</span>
+              </div>
+              ${totals.paid > 0 ? `
+                <div class="flex justify-between text-amber-700 font-bold text-[11px]">
+                  <span>Sisa Pelunasan</span>
+                  <span class="font-mono">${formatMoney(totals.balanceDue)}</span>
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- Footer -->
+            <div class="pt-3 border-t border-slate-200 flex ${isCompact ? 'flex-col gap-3' : 'items-center justify-between gap-4'}">
+              <div class="flex items-center gap-3">
+                ${state.showQR ? `<div id="receipt-qr-target" class="p-1 bg-white border border-slate-200 rounded-lg shrink-0"></div>` : ''}
+                ${state.showNotes ? `
+                  <div class="text-[10px] text-slate-500">
+                    <div class="font-bold text-slate-700">${escapeHtml(state.paymentMethod)}</div>
+                    <div class="mt-0.5">${escapeHtml(state.footerNote)}</div>
+                  </div>
+                ` : ''}
+              </div>
+              ${state.showSignature ? `
+                <div class="${isCompact ? 'text-left' : 'text-right'} shrink-0">
+                  <div class="font-bold text-slate-900">${escapeHtml(state.signerName)}</div>
+                  <div class="text-[10px] text-slate-500">${escapeHtml(state.signerRole)}</div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ----------------------------------------------------------------------
+    // TEMPLATE 4: DEVELOPER TERMINAL / GIT COMMIT RECEIPT
+    // ----------------------------------------------------------------------
+    function buildDevTerminalLayout(totals, isCompact) {
+      const pad = state.paperPadding;
+      const baseText = isCompact ? 'text-[10px]' : 'text-[11px]';
+
+      return `
+        <div style="padding:${pad}px;" class="font-mono ${baseText} bg-slate-950 text-slate-200 min-h-full">
+          <!-- Window Top Dots -->
+          <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-800">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span class="ml-2 text-[10px] text-slate-400">receipt_${escapeHtml(state.receiptNo.toLowerCase())}.json</span>
+            </div>
+            <span style="color:${state.accentColor};" class="text-[10px] font-bold">[${escapeHtml(state.paymentStatus)}]</span>
+          </div>
+
+          <!-- Studio & Git Header -->
+          <div class="flex items-center gap-3 mb-4">
+            ${renderLogoHTML(true)}
+            <div>
+              <div style="color:${state.accentColor};" class="font-bold text-sm">$ ./emit-receipt --studio="${escapeHtml(state.studioName)}"</div>
+              <div class="text-slate-400 text-[10px]">${escapeHtml(state.studioTagline)} | ${escapeHtml(state.studioEmail)}</div>
+            </div>
+          </div>
+
+          <!-- JSON Metadata Block -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 mb-4 space-y-1 text-[10px]">
+            <div class="text-slate-500">// Transaction Metadata</div>
+            <div><span class="text-sky-400">"receipt_id"</span>: <span class="text-amber-300">"${escapeHtml(state.receiptNo)}"</span>,</div>
+            <div><span class="text-sky-400">"timestamp"</span>: <span class="text-emerald-400">"${escapeHtml(state.date)}"</span>,</div>
+            <div><span class="text-sky-400">"client"</span>: <span class="text-amber-300">"${escapeHtml(state.clientName)}"</span>,</div>
+            <div><span class="text-sky-400">"repository"</span>: <span class="text-amber-300">"${escapeHtml(state.projectName)}"</span></div>
+          </div>
+
+          <!-- Deliverables Diff List -->
+          <div class="mb-4">
+            <div class="text-slate-400 text-[10px] mb-2">--- a/deliverables</div>
+            <div class="space-y-2">
+              ${state.items.map(item => `
+                <div class="p-2.5 rounded-lg bg-slate-900/60 border-l-2" style="border-color:${state.accentColor};">
+                  <div class="flex justify-between items-start gap-2">
+                    <span class="text-emerald-400 font-bold">+ ${escapeHtml(item.title)}</span>
+                    <span class="text-white font-bold shrink-0">${formatMoney(item.qty * item.price)}</span>
+                  </div>
+                  ${item.desc ? `<div class="text-slate-400 text-[10px] mt-0.5"># ${escapeHtml(item.desc)}</div>` : ''}
+                  <div class="text-slate-500 text-[9px] mt-0.5">qty: ${item.qty} @ ${formatMoney(item.price)}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Summary Block -->
+          <div class="border-t border-slate-800 pt-3 space-y-1">
+            <div class="flex justify-between text-slate-400">
+              <span>subtotal:</span>
+              <span>${formatMoney(totals.subtotal)}</span>
+            </div>
+            ${totals.discount > 0 ? `
+              <div class="flex justify-between text-emerald-400">
+                <span>discount:</span>
+                <span>-${formatMoney(totals.discount)}</span>
+              </div>
+            ` : ''}
+            ${totals.taxAmount > 0 ? `
+              <div class="flex justify-between text-slate-400">
+                <span>tax_${state.taxPercent}pct:</span>
+                <span>${formatMoney(totals.taxAmount)}</span>
+              </div>
+            ` : ''}
+            <div class="flex justify-between font-bold text-sm pt-1.5 border-t border-slate-800" style="color:${state.accentColor};">
+              <span>TOTAL_SETTLED:</span>
+              <span>${formatMoney(totals.grandTotal)}</span>
+            </div>
+            ${totals.paid > 0 ? `
+              <div class="flex justify-between text-[10px] text-slate-300">
+                <span>paid_deposit:</span>
+                <span>${formatMoney(totals.paid)}</span>
+              </div>
+              <div class="flex justify-between text-[10px] text-rose-400 font-bold">
+                <span>balance_due:</span>
+                <span>${formatMoney(totals.balanceDue)}</span>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Footer -->
+          <div class="mt-5 pt-3 border-t border-slate-800 flex ${isCompact ? 'flex-col gap-3' : 'items-end justify-between gap-3'}">
+            <div class="flex items-center gap-3">
+              ${state.showQR ? `<div id="receipt-qr-target" class="p-1 bg-slate-900 border border-slate-700 rounded-lg shrink-0"></div>` : ''}
+              ${state.showNotes ? `
+                <div class="text-[9px] text-slate-400 space-y-1">
+                  <div class="text-slate-200">${escapeHtml(state.paymentMethod)}</div>
+                  <div>/* ${escapeHtml(state.footerNote)} */</div>
+                </div>
+              ` : ''}
+            </div>
+            ${state.showSignature ? `
+              <div class="${isCompact ? 'text-left' : 'text-right'} shrink-0 text-[10px]">
+                <div class="text-slate-500">signed-off-by:</div>
+                <div class="text-white font-bold">${escapeHtml(state.signerName)}</div>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    // ----------------------------------------------------------------------
+    // TEMPLATE 5: CLASSIC FORMAL KWITANSI INDONESIA (Lengkap dengan Terbilang & Materai)
+    // ----------------------------------------------------------------------
+    function buildClassicKwitansiLayout(totals, isCompact) {
+      const pad = state.paperPadding;
+      const baseText = isCompact ? 'text-[10px]' : 'text-xs';
+      const nominalDiterima = totals.paid > 0 ? totals.paid : totals.grandTotal;
+
+      return `
+        <div style="padding:${pad}px;" class="${baseText} text-slate-900 bg-white">
+          <div style="border-color:${state.accentColor};" class="border-2 rounded-xl p-4 sm:p-5 space-y-4">
+            
+            <!-- Top Kop Kwitansi -->
+            <div class="flex ${isCompact ? 'flex-col gap-2' : 'items-center justify-between gap-4'} pb-3 border-b-2 border-slate-900">
+              <div class="flex items-center gap-3">
+                ${renderLogoHTML(false)}
+                <div>
+                  <h2 class="font-extrabold text-slate-900 ${isCompact ? 'text-sm' : 'text-base'} uppercase tracking-wide">${escapeHtml(state.studioName)}</h2>
+                  <p class="text-[10px] text-slate-600">${escapeHtml(state.studioTagline)}</p>
+                  <p class="text-[10px] text-slate-500">${escapeHtml(state.studioAddress)} • ${escapeHtml(state.studioPhone)}</p>
+                </div>
+              </div>
+              <div class="${isCompact ? 'text-left' : 'text-right'}">
+                <div class="font-extrabold tracking-widest uppercase ${isCompact ? 'text-sm' : 'text-lg'} text-slate-900">KWITANSI</div>
+                <div class="font-mono text-[11px] font-bold text-slate-700">No. ${escapeHtml(state.receiptNo)}</div>
+              </div>
+            </div>
+
+            <!-- Baris Formal Kwitansi -->
+            <div class="space-y-2.5">
+              <div class="grid grid-cols-12 gap-2 items-baseline">
+                <div class="col-span-4 sm:col-span-3 font-semibold text-slate-600">Telah Terima Dari</div>
+                <div class="col-span-8 sm:col-span-9 font-bold text-slate-900 border-b border-dotted border-slate-400 pb-0.5">
+                  : ${escapeHtml(state.clientName)} ${state.clientContact ? `(${escapeHtml(state.clientContact)})` : ''}
+                </div>
+              </div>
+
+              <div class="grid grid-cols-12 gap-2 items-baseline">
+                <div class="col-span-4 sm:col-span-3 font-semibold text-slate-600">Uang Sejumlah</div>
+                <div style="background-color:${state.accentColor}20;" class="col-span-8 sm:col-span-9 font-bold italic text-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-300">
+                  # ${terbilangID(nominalDiterima)} #
+                </div>
+              </div>
+
+              <div class="grid grid-cols-12 gap-2 items-baseline">
+                <div class="col-span-4 sm:col-span-3 font-semibold text-slate-600">Untuk Pembayaran</div>
+                <div class="col-span-8 sm:col-span-9 text-slate-800 border-b border-dotted border-slate-400 pb-1">
+                  : <span class="font-bold">${escapeHtml(state.projectName)}</span>
+                  <ul class="mt-1.5 space-y-1 text-[11px] text-slate-600 pl-3 list-disc">
+                    ${state.items.map(item => `
+                      <li>
+                        <span class="font-semibold text-slate-800">${escapeHtml(item.title)}</span>
+                        (${item.qty}x) — <span class="font-mono">${formatMoney(item.qty * item.price)}</span>
+                      </li>
+                    `).join('')}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Nominal Box & Tanda Tangan + Kotak Materai -->
+            <div class="pt-3 flex ${isCompact ? 'flex-col gap-4' : 'items-end justify-between gap-4'}">
+              <div class="space-y-2">
+                <div style="border-color:${state.accentColor};" class="inline-block border-2 bg-slate-50 px-4 py-2 rounded-xl">
+                  <span class="text-[10px] font-bold uppercase text-slate-500 block">Jumlah Diterima</span>
+                  <span class="font-mono font-extrabold ${isCompact ? 'text-sm' : 'text-lg'} text-slate-900">${formatMoney(nominalDiterima)}</span>
+                </div>
+                ${totals.balanceDue > 0 ? `
+                  <div class="text-[11px] font-bold text-amber-700">Sisa Pelunasan: ${formatMoney(totals.balanceDue)}</div>
+                ` : ''}
+                ${state.showNotes ? `
+                  <div class="text-[10px] text-slate-500 max-w-xs">
+                    <div>${escapeHtml(state.paymentMethod)}</div>
+                  </div>
+                ` : ''}
+              </div>
+
+              <div class="flex items-end gap-4">
+                ${state.showQR ? `<div id="receipt-qr-target" class="p-1 bg-white border border-slate-200 rounded-lg shrink-0"></div>` : ''}
+                
+                ${state.showSignature ? `
+                  <div class="text-center min-w-[140px]">
+                    <div class="text-[10px] text-slate-600 mb-2">${formatDateReadable(state.date)}</div>
+                    <div class="w-16 h-10 mx-auto mb-2 border border-dashed border-slate-400 rounded flex items-center justify-center text-[8px] text-slate-400">
+                      MATERAI<br/>10.000
+                    </div>
+                    <div class="font-bold text-slate-900 underline">${escapeHtml(state.signerName)}</div>
+                    <div class="text-[10px] text-slate-500">${escapeHtml(state.signerRole)}</div>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      `;
+    }
+
+    // ----------------------------------------------------------------------
+    // TEMPLATE 6: FINTECH SPLIT TICKET (Stripe / Wise / Modern Fintech)
+    // ----------------------------------------------------------------------
+    function buildFintechTicketLayout(totals, isCompact) {
+      const pad = state.paperPadding;
+      const baseText = isCompact ? 'text-[10px]' : 'text-xs';
+
+      return `
+        <div style="padding:${pad}px;" class="${baseText} bg-slate-50 text-slate-800">
+          <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+            
+            <!-- Top Pill Header -->
+            <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5">
+                ${renderLogoHTML(false)}
+                <div>
+                  <div class="font-bold text-slate-900">${escapeHtml(state.studioName)}</div>
+                  <div class="text-[10px] text-slate-500">${escapeHtml(state.studioEmail)}</div>
+                </div>
+              </div>
+              <span style="background-color:${state.accentColor}20; color:#0f172a;" class="px-2.5 py-1 rounded-full font-mono font-bold text-[10px]">
+                ${escapeHtml(state.paymentStatus)}
+              </span>
+            </div>
+
+            <!-- Hero Amount Center -->
+            <div class="px-5 py-5 text-center bg-gradient-to-b from-white to-slate-50/70 border-b border-dashed border-slate-200">
+              <div class="text-[10px] font-semibold uppercase tracking-widest text-slate-400">${escapeHtml(state.docTitle)}</div>
+              <div class="font-mono font-extrabold ${isCompact ? 'text-lg' : 'text-2xl'} text-slate-900 mt-1">
+                ${formatMoney(totals.paid > 0 ? totals.paid : totals.grandTotal)}
+              </div>
+              <div class="text-[11px] text-slate-500 mt-1">
+                Dibayarkan oleh <span class="font-semibold text-slate-800">${escapeHtml(state.clientName)}</span>
+              </div>
+            </div>
+
+            <!-- Metadata Grid -->
+            <div class="p-4 sm:p-5 grid grid-cols-2 gap-3 text-[11px] border-b border-slate-100">
+              <div>
+                <span class="text-slate-400 block text-[10px]">Nomor Referensi</span>
+                <span class="font-mono font-semibold text-slate-800">${escapeHtml(state.receiptNo)}</span>
+              </div>
+              <div class="text-right">
+                <span class="text-slate-400 block text-[10px]">Tanggal Bayar</span>
+                <span class="font-semibold text-slate-800">${formatDateReadable(state.date)}</span>
+              </div>
+              <div class="col-span-2">
+                <span class="text-slate-400 block text-[10px]">Proyek & Lingkup Kerja</span>
+                <span class="font-semibold text-slate-800">${escapeHtml(state.projectName)}</span>
+              </div>
+            </div>
+
+            <!-- Breakdown Items -->
+            <div class="p-4 sm:p-5 space-y-2.5">
+              <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Rincian Pembayaran</div>
+              ${state.items.map(item => `
+                <div class="flex justify-between items-start gap-3">
+                  <div>
+                    <div class="font-semibold text-slate-800">${escapeHtml(item.title)}</div>
+                    <div class="text-[10px] text-slate-400">${item.qty} × ${formatMoney(item.price)}</div>
+                  </div>
+                  <div class="font-mono font-semibold text-slate-900">${formatMoney(item.qty * item.price)}</div>
+                </div>
+              `).join('')}
+
+              <div class="pt-3 mt-3 border-t border-slate-100 space-y-1 text-[11px]">
+                <div class="flex justify-between text-slate-500">
+                  <span>Subtotal</span>
+                  <span class="font-mono">${formatMoney(totals.subtotal)}</span>
+                </div>
+                ${totals.discount > 0 ? `
+                  <div class="flex justify-between text-emerald-600">
+                    <span>Diskon</span>
+                    <span class="font-mono">-${formatMoney(totals.discount)}</span>
+                  </div>
+                ` : ''}
+                ${totals.taxAmount > 0 ? `
+                  <div class="flex justify-between text-slate-500">
+                    <span>PPN (${state.taxPercent}%)</span>
+                    <span class="font-mono">${formatMoney(totals.taxAmount)}</span>
+                  </div>
+                ` : ''}
+                <div class="flex justify-between font-bold text-slate-900 pt-1">
+                  <span>Total Tagihan</span>
+                  <span class="font-mono">${formatMoney(totals.grandTotal)}</span>
+                </div>
+                ${totals.paid > 0 ? `
+                  <div class="flex justify-between font-bold text-amber-700">
+                    <span>Sisa Tagihan</span>
+                    <span class="font-mono">${formatMoney(totals.balanceDue)}</span>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-4 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3">
+              <div class="text-[10px] text-slate-500">
+                ${state.showNotes ? `<div class="font-medium text-slate-700">${escapeHtml(state.paymentMethod)}</div>` : ''}
+                <div class="mt-0.5">${escapeHtml(state.signerName)} — ${escapeHtml(state.signerRole)}</div>
+              </div>
+              ${state.showQR ? `<div id="receipt-qr-target" class="p-1 bg-white border border-slate-200 rounded-lg shrink-0"></div>` : ''}
+            </div>
+
+          </div>
+        </div>
+      `;
+    }
+
+    // ----------------------------------------------------------------------
+    // TEMPLATE 7: SWISS GRID EDITORIAL (Bold Typography & High Contrast)
+    // ----------------------------------------------------------------------
+    function buildSwissEditorialLayout(totals, isCompact) {
+      const pad = state.paperPadding;
+      const baseText = isCompact ? 'text-[10px]' : 'text-xs';
+
+      return `
+        <div style="padding:${pad}px;" class="${baseText} text-slate-950 bg-white">
+          <!-- Giant Top Title & Number -->
+          <div class="border-b-4 border-slate-950 pb-4 flex ${isCompact ? 'flex-col gap-2' : 'items-end justify-between gap-4'}">
+            <div>
+              <div class="flex items-center gap-2.5 mb-2">
+                ${renderLogoHTML(false)}
+                <span class="font-bold uppercase tracking-wider text-xs">${escapeHtml(state.studioName)}</span>
+              </div>
+              <h1 class="font-black uppercase tracking-tighter ${isCompact ? 'text-xl' : 'text-3xl'} leading-none">
+                ${escapeHtml(state.docTitle)}
+              </h1>
+            </div>
+            <div class="${isCompact ? 'text-left' : 'text-right'} font-mono">
+              <div class="text-[10px] uppercase text-slate-500">Ref. Number</div>
+              <div class="font-bold text-sm">${escapeHtml(state.receiptNo)}</div>
+              <div class="text-[10px] text-slate-600 mt-0.5">${formatDateReadable(state.date)}</div>
+            </div>
+          </div>
+
+          <!-- Grid 2 Kolom: Dari & Untuk -->
+          <div class="grid ${isCompact ? 'grid-cols-1 gap-3' : 'grid-cols-2 gap-4'} py-4 border-b-2 border-slate-950">
+            <div>
+              <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">01 / DEVELOPER</div>
+              <div class="font-bold">${escapeHtml(state.studioTagline)}</div>
+              <div class="text-[10px] text-slate-600 mt-0.5">${escapeHtml(state.studioAddress)}</div>
+              <div class="text-[10px] text-slate-600">${escapeHtml(state.studioEmail)}</div>
+            </div>
+            <div>
+              <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">02 / KLIEN & PROYEK</div>
+              <div class="font-bold">${escapeHtml(state.clientName)}</div>
+              <div class="text-[10px] text-slate-700 font-medium">${escapeHtml(state.projectName)}</div>
+              <div class="text-[10px] text-slate-500 mt-0.5">${escapeHtml(state.clientContact)}</div>
+            </div>
+          </div>
+
+          <!-- Items Grid -->
+          <div class="py-3 border-b-2 border-slate-950">
+            <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">03 / RINCIAN DELIVERABLE</div>
+            <div class="divide-y divide-slate-200">
+              ${state.items.map((item, i) => `
+                <div class="py-2.5 flex justify-between items-start gap-3">
+                  <div class="flex gap-2.5">
+                    <span class="font-mono font-bold text-slate-400">0${i + 1}</span>
+                    <div>
+                      <div class="font-bold text-slate-950">${escapeHtml(item.title)}</div>
+                      ${item.desc ? `<div class="text-[10px] text-slate-600 mt-0.5">${escapeHtml(item.desc)}</div>` : ''}
+                    </div>
+                  </div>
+                  <div class="text-right font-mono shrink-0">
+                    <div class="font-bold">${formatMoney(item.qty * item.price)}</div>
+                    <div class="text-[9px] text-slate-500">${item.qty} × ${formatMoney(item.price)}</div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Totals & Accent Block -->
+          <div class="py-4 flex ${isCompact ? 'flex-col gap-3' : 'items-center justify-between gap-4'} border-b-2 border-slate-950">
+            <div>
+              <span style="background-color:${state.accentColor};" class="inline-block px-3 py-1 font-mono font-black text-xs uppercase text-slate-950">
+                STATUS: ${escapeHtml(state.paymentStatus)}
+              </span>
+              ${state.showNotes ? `<div class="text-[10px] text-slate-600 mt-2">${escapeHtml(state.paymentMethod)}</div>` : ''}
+            </div>
+
+            <div class="space-y-1 text-right font-mono">
+              <div class="text-[11px] text-slate-500">Subtotal: ${formatMoney(totals.subtotal)}</div>
+              ${totals.discount > 0 ? `<div class="text-[11px] text-emerald-700">Diskon: -${formatMoney(totals.discount)}</div>` : ''}
+              ${totals.taxAmount > 0 ? `<div class="text-[11px] text-slate-500">PPN (${state.taxPercent}%): ${formatMoney(totals.taxAmount)}</div>` : ''}
+              <div class="font-black ${isCompact ? 'text-base' : 'text-xl'} text-slate-950">
+                ${formatMoney(totals.grandTotal)}
+              </div>
+              ${totals.paid > 0 ? `<div class="text-[10px] font-bold text-amber-700">Sisa: ${formatMoney(totals.balanceDue)}</div>` : ''}
+            </div>
+          </div>
+
+          <!-- Bottom Bar -->
+          <div class="pt-4 flex items-end justify-between gap-4">
+            <div class="flex items-center gap-3">
+              ${state.showQR ? `<div id="receipt-qr-target" class="shrink-0"></div>` : ''}
+              ${state.showNotes ? `<p class="text-[10px] text-slate-500 max-w-xs">${escapeHtml(state.footerNote)}</p>` : ''}
+            </div>
+            ${state.showSignature ? `
+              <div class="text-right shrink-0">
+                <div class="font-bold uppercase text-xs">${escapeHtml(state.signerName)}</div>
+                <div class="text-[10px] text-slate-500">${escapeHtml(state.signerRole)}</div>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    // ----------------------------------------------------------------------
+    // 9. DEMO PRESETS & ACTIONS (PRINT, PNG EXPORT, ZOOM, RESET)
+    // ----------------------------------------------------------------------
+    function loadDemoPreset(presetKey) {
+      if (!presetKey) return;
+
+      if (presetKey === 'webdev') {
+        state.docTitle = 'PAYMENT RECEIPT';
+        state.projectName = 'Platform Web E-Commerce & Dashboard Admin';
+        state.clientName = 'CV Borneo Niaga Sejahtera';
+        state.items = [
+          { id: 101, title: 'Custom Web Application (Next.js + Laravel)', desc: 'Katalog produk, keranjang, manajemen stok & laporan penjualan', qty: 1, price: 5500000 },
+          { id: 102, title: 'Integrasi Payment Gateway Midtrans', desc: 'QRIS otomatis, Virtual Account & status webhook real-time', qty: 1, price: 1250000 },
+          { id: 103, title: 'Cloud Hosting VPS & Domain .ID (1 Tahun)', desc: 'Konfigurasi SSL, Cloudflare CDN & Backup otomatis', qty: 1, price: 950000 }
+        ];
+      } else if (presetKey === 'mobileapp') {
+        state.docTitle = 'INVOICE / RECEIPT';
+        state.projectName = 'Aplikasi Mobile Kurir & Tracking (Android & iOS)';
+        state.clientName = 'PT Kaltim Express Logistik';
+        state.items = [
+          { id: 201, title: 'Pengembangan Aplikasi Mobile Flutter (Android & iOS)', desc: 'Live GPS Tracking, Scan Barcode Resi & Push Notification FCM', qty: 1, price: 8500000 },
+          { id: 202, title: 'REST API Backend & Web Admin Dispatcher', desc: 'Node.js + PostgreSQL + Google Maps Distance Matrix API', qty: 1, price: 3500000 },
+          { id: 203, title: 'Publikasi Google Play Store & App Store', desc: 'Setup akun developer, signing key & asset store listing', qty: 1, price: 750000 }
+        ];
+      } else if (presetKey === 'maintenance') {
+        state.docTitle = 'SERVICE RECEIPT';
+        state.projectName = 'Retainer Maintenance & Server Ops - Bulan Ini';
+        state.clientName = 'Klinik Utama Sehat Sentosa';
+        state.items = [
+          { id: 301, title: 'Monthly Server Monitoring & Security Patch', desc: 'Uptime monitoring 24/7, update OS Linux & firewall hardening', qty: 1, price: 1200000 },
+          { id: 302, title: 'Optimasi Query Database & Caching Redis', desc: 'Mempercepat load halaman rekam medis hingga 3x lebih cepat', qty: 4, price: 300000 }
+        ];
+      } else if (presetKey === 'uiux') {
+        state.docTitle = 'DESIGN RECEIPT';
+        state.projectName = 'Redesign UI/UX Aplikasi Fintech & Design System';
+        state.clientName = 'Koperasi Digital Maju Bersama';
+        state.items = [
+          { id: 401, title: 'UX Research, User Flow & Wireframing', desc: 'Riset kebutuhan pengguna & alur transaksi simpan pinjam', qty: 1, price: 1500000 },
+          { id: 402, title: 'High-Fidelity UI Design & Interactive Prototype', desc: '25+ layar mobile di Figma lengkap dengan token komponen', qty: 1, price: 2750000 }
+        ];
+      }
+
+      document.getElementById('preset-selector').value = '';
+      syncInputsWithState();
+      renderItemsEditor();
+      saveState();
+      renderReceipt();
+      showToast('Contoh proyek developer berhasil dimuat!');
+    }
+
+    function generateNewReceiptNo() {
+      const year = new Date().getFullYear();
+      const rand = Math.floor(1000 + Math.random() * 9000);
+      const newNo = `INV-${year}-${rand}`;
+      document.getElementById('input-receipt-no').value = newNo;
+      updateState('receiptNo', newNo);
+      showToast(`Nomor baru: ${newNo}`);
+    }
+
+    function printReceipt() {
+      window.print();
+    }
+
+    async function exportReceiptPNG() {
+      const btn = document.getElementById('btn-export-png');
+      const sheet = document.getElementById('receipt-sheet');
+      const zoomContainer = document.getElementById('receipt-zoom-container');
+
+      if (typeof html2canvas === 'undefined') {
+        showToast('Library export gambar belum siap, coba gunakan Print / PDF.');
+        return;
+      }
+
+      const origText = btn.innerHTML;
+      btn.innerHTML = `<span>⏳ Memproses...</span>`;
+      btn.disabled = true;
+
+      // Reset sementara skala zoom agar hasil PNG tajam 1:1
+      const prevTransform = zoomContainer.style.transform;
+      zoomContainer.style.transform = 'scale(1)';
+
+      try {
+        const canvas = await html2canvas(sheet, {
+          scale: 3, // Resolusi HD 3x
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          logging: false
+        });
+
+        const link = document.createElement('a');
+        const safeNo = (state.receiptNo || 'receipt').replace(/[^a-zA-Z0-9-_]/g, '_');
+        link.download = `Receipt_${safeNo}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+
+        showToast('Struk berhasil diunduh sebagai gambar PNG HD!');
+      } catch (err) {
+        console.error(err);
+        showToast('Gagal mengekspor PNG. Gunakan tombol Print / PDF.');
+      } finally {
+        zoomContainer.style.transform = prevTransform;
+        btn.innerHTML = origText;
+        btn.disabled = false;
+      }
+    }
+
+    function changeZoom(delta) {
+      currentZoom = Math.max(0.5, Math.min(1.6, +(currentZoom + delta).toFixed(2)));
+      applyZoom();
+    }
+
+    function resetZoom() {
+      currentZoom = 1.0;
+      applyZoom();
+    }
+
+    function applyZoom() {
+      const container = document.getElementById('receipt-zoom-container');
+      container.style.transform = `scale(${currentZoom})`;
+      document.getElementById('zoom-level-label').textContent = `${Math.round(currentZoom * 100)}%`;
+    }
+
+    function resetAllDefault() {
+      localStorage.removeItem('devreceipt_studio_state_v1');
+      state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      renderLayoutCards();
+      renderPaperPresets();
+      syncInputsWithState();
+      renderItemsEditor();
+      renderReceipt();
+      showToast('Semua pengaturan dikembalikan ke default.');
+    }
+
+    function showToast(message) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-xl shadow-lg border border-slate-700 flex items-center gap-2 transition-all duration-300 opacity-0 translate-y-2';
+      toast.innerHTML = `<span class="text-amber-400">●</span> <span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('opacity-0', 'translate-y-2');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 2600);
+    }
+
+    // Jalankan Aplikasi saat halaman selesai dimuat
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>

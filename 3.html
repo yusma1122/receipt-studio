@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Receipt Studio — Developer Services</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+:root{--ink:#17212b;--muted:#75818c;--line:#e5e9ed;--panel:#fff;--bg:#f3f5f7;--accent:#246bfe;--accent-soft:#edf3ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px 'DM Sans',sans-serif}
+header{height:68px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 26px;position:sticky;top:0;z-index:5}
+.brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:16px}.mark{width:32px;height:32px;background:#17212b;color:#fff;border-radius:9px;display:grid;place-items:center;font-weight:700;font-family:'Space Mono'}
+.brand small{display:block;font-weight:400;font-size:11px;color:var(--muted);margin-top:2px}
+.actions{display:flex;gap:8px}.btn{border:1px solid var(--line);background:#fff;color:var(--ink);padding:9px 13px;border-radius:9px;font:600 13px inherit;cursor:pointer}.btn:hover{background:#f7f9fb}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.primary:hover{background:#1557df}
+main{display:grid;grid-template-columns:360px minmax(400px,1fr) 290px;gap:18px;padding:18px;max-width:1600px;margin:auto;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}.panel-head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.panel-head h2{font-size:14px;margin:0}.panel-head small{color:var(--muted);font-size:11px}.panel-body{padding:16px}
+.section{margin-bottom:20px}.section:last-child{margin-bottom:0}.section-title{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#87929d;font-weight:700;margin:0 0 12px}
+label{display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:#43505d}input,select,textarea{width:100%;border:1px solid #dfe4e8;background:#fff;border-radius:8px;padding:9px 10px;font:13px 'DM Sans';color:var(--ink);outline:none}input:focus,select:focus,textarea:focus{border-color:#8ab0ff;box-shadow:0 0 0 3px #246bfe12}textarea{resize:vertical;min-height:65px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{margin-bottom:11px}.field:last-child{margin-bottom:0}.upload{display:flex;gap:9px;align-items:center}.upload input{font-size:11px;padding:7px}.logo-preview{height:44px;width:44px;border:1px dashed #d7dfe5;border-radius:8px;display:grid;place-items:center;color:#9aa5af;overflow:hidden;font-size:10px}.logo-preview img{max-width:100%;max-height:100%;object-fit:contain}
+.layout-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}.layout-card{border:1px solid var(--line);border-radius:9px;padding:9px;cursor:pointer;transition:.15s}.layout-card:hover{border-color:#9ab9ff}.layout-card.active{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 1px var(--accent)}.layout-thumb{height:45px;background:#f4f6f8;border-radius:5px;margin-bottom:7px;position:relative;overflow:hidden;padding:6px}.layout-thumb:before{content:'';display:block;height:4px;width:35%;background:#263441;margin-bottom:4px}.layout-thumb:after{content:'';display:block;height:2px;width:85%;background:#aab4be;box-shadow:0 5px #c5cdd4,0 10px #c5cdd4,0 15px #c5cdd4}.layout-card span{font-size:11px;font-weight:600}
+.item-list{display:flex;flex-direction:column;gap:8px}.item-row{display:grid;grid-template-columns:1fr 70px 74px 28px;gap:6px}.item-row input{padding:7px;font-size:12px}.icon-btn{border:1px solid var(--line);background:white;border-radius:7px;cursor:pointer;color:#7d8994}.add-row{width:100%;padding:8px;border:1px dashed #cdd6dd;border-radius:8px;background:#fafbfc;font:600 12px 'DM Sans';cursor:pointer;margin-top:8px}
+.preview-wrap{min-height:calc(100vh - 105px);display:flex;flex-direction:column;align-items:center;gap:12px}.preview-bar{width:100%;display:flex;justify-content:space-between;align-items:center;padding:4px 4px 0;color:var(--muted);font-size:12px}.preview-stage{width:100%;min-height:600px;background:#e8ebef;border:1px solid #dce1e5;border-radius:14px;display:flex;align-items:flex-start;justify-content:center;padding:32px;overflow:auto}
+.receipt{background:white;color:#1d2730;box-shadow:0 12px 36px #17212b20;position:relative;overflow:hidden;padding:34px 32px;font-family:'DM Sans';width:100%;min-height:500px;transition:width .2s}.receipt *{box-sizing:border-box}.receipt .r-logo{max-width:110px;max-height:60px;object-fit:contain}.r-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}.r-company h1{font-size:20px;margin:0 0 5px;letter-spacing:-.03em}.r-company p,.r-meta p{font-size:10px;line-height:1.5;color:#64717c;margin:2px 0}.r-meta{text-align:right}.r-title{font-size:24px;letter-spacing:-.04em;margin:28px 0 8px;font-weight:700}.r-sub{color:#71808c;font-size:11px;margin-bottom:20px}.r-info{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}.r-info div{font-size:10px;line-height:1.55}.r-info strong{display:block;color:#87929c;text-transform:uppercase;font-size:9px;letter-spacing:.08em;margin-bottom:4px}.r-info span{font-weight:600}.r-table{width:100%;border-collapse:collapse;margin:18px 0;font-size:11px}.r-table th{text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#77838d;padding:9px 5px;border-bottom:1px solid #dfe4e8}.r-table td{padding:10px 5px;border-bottom:1px solid #edf0f2}.r-table th:nth-child(n+2),.r-table td:nth-child(n+2){text-align:right}.totals{width:55%;margin-left:auto;font-size:11px}.total-row{display:flex;justify-content:space-between;padding:6px 0;color:#65717c}.total-row.grand{border-top:1px solid #dfe4e8;padding-top:11px;margin-top:4px;color:#1d2730;font-weight:700;font-size:14px}.r-note{font-size:10px;line-height:1.6;color:#66737d;margin-top:20px}.r-footer{text-align:center;font-size:9px;color:#86919b;margin-top:20px;padding-top:12px;border-top:1px solid #e6eaed}.r-barcode-wrap{display:flex;flex-direction:column;align-items:center;gap:5px;margin:22px auto 4px}.r-barcode{height:42px;display:flex;align-items:stretch;gap:1px;max-width:100%;overflow:hidden}.r-barcode i{display:block;background:#17212b;flex:none}.r-barcode-number{font:9px 'Space Mono',monospace;letter-spacing:2px;color:#65717c}.r-sign{display:flex;justify-content:space-between;margin-top:28px;font-size:10px;color:#65717c}.receipt[data-layout="minimal"]{padding:38px 30px}.receipt[data-layout="minimal"] .r-head{display:block;text-align:center}.receipt[data-layout="minimal"] .r-meta{text-align:center;margin-top:10px}.receipt[data-layout="minimal"] .r-title{text-align:center;border-top:1px solid #222;border-bottom:1px solid #222;padding:12px 0;font-size:18px}.receipt[data-layout="minimal"] .r-info{border-bottom:1px dashed #aaa;padding-bottom:14px}.receipt[data-layout="bold"]{border-top:10px solid var(--accent);padding:30px}.receipt[data-layout="bold"] .r-title{background:var(--accent);color:#fff;padding:12px 14px;font-size:21px}.receipt[data-layout="bold"] .r-table th{background:#f1f4f7}.receipt[data-layout="split"] .r-head{border-bottom:2px solid var(--accent);padding-bottom:18px}.receipt[data-layout="split"] .r-title{font-size:28px;color:var(--accent)}.receipt[data-layout="split"] .r-info{background:#f6f8fa;padding:14px}.receipt[data-layout="compact"]{padding:22px 20px;font-family:'Space Mono',monospace}.receipt[data-layout="compact"] .r-company h1{font-size:15px}.receipt[data-layout="compact"] .r-title{font-size:17px;margin:18px 0 5px}.receipt[data-layout="compact"] .r-table{font-size:9px}.receipt[data-layout="compact"] .r-table td{padding:6px 3px}.receipt[data-layout="compact"] .r-info,.receipt[data-layout="compact"] .r-note{font-size:9px}.receipt[data-layout="classic"]{font-family:Georgia,serif;padding:38px 35px}.receipt[data-layout="classic"] .r-title{font-family:Georgia;font-weight:400;font-style:italic;border-bottom:1px solid #9e9e9e;padding-bottom:9px}.receipt[data-layout="classic"] .r-table th{border-bottom:1px solid #333;color:#333}.receipt[data-layout="classic"] .r-footer{border-top:1px solid #333}.receipt[data-layout="ticket"]{padding:25px 24px;border:1px dashed #b7c0c8}.receipt[data-layout="ticket"] .r-head{display:block;text-align:center}.receipt[data-layout="ticket"] .r-meta{text-align:center;margin-top:8px}.receipt[data-layout="ticket"] .r-title{text-align:center;font-size:19px}.receipt[data-layout="ticket"] .r-info{border-top:1px dashed #aab4bd;border-bottom:1px dashed #aab4bd;padding:12px 0}.receipt[data-layout="ticket"] .r-footer{border:0}
+.color-row{display:flex;gap:10px;align-items:center}.color-row input[type=color]{width:42px;height:36px;padding:3px}.color-row input[type=text]{flex:1}
+.note-tip{background:#f6f8fa;border-radius:8px;padding:10px;font-size:11px;color:#74808a;line-height:1.5}
+@media(max-width:1200px){main{grid-template-columns:330px 1fr}.right-panel{grid-column:1;grid-row:2}.preview-wrap{grid-column:2;grid-row:1 / span 2}.preview-stage{min-height:700px}}
+@media(max-width:850px){main{display:flex;flex-direction:column;padding:10px}.panel,.preview-wrap{width:100%}.preview-wrap{order:2}.right-panel{order:3}.preview-stage{padding:15px;min-height:450px}.receipt{padding:22px!important}.preview-bar{padding:5px}}
+@media print{body{background:white}header,main>.panel,.preview-bar{display:none!important}main{display:block;padding:0;margin:0}.preview-wrap{display:block;min-height:0}.preview-stage{display:block;padding:0;background:white;border:0;min-height:0;overflow:visible}.receipt{box-shadow:none;margin:0!important;width:var(--print-width)!important;min-height:var(--print-height)!important;padding:var(--print-padding)!important;page-break-inside:avoid}@page{margin:0}}
+</style>
+</head>
+<body>
+<header>
+<div class="brand"><div class="mark">R</div><div>Receipt Studio<small>Developer service receipts</small></div></div>
+<div class="actions"><button class="btn" onclick="resetDemo()">Reset contoh</button><button class="btn primary" onclick="window.print()">Cetak / Save PDF</button></div>
+</header>
+<main>
+<section class="panel">
+<div class="panel-head"><h2>Konten struk</h2><small>Live editor</small></div>
+<div class="panel-body">
+<div class="section"><p class="section-title">Brand & identitas</p>
+<div class="field"><label>Logo (upload)</label><div class="upload"><div class="logo-preview" id="logoPreview">Logo</div><input type="file" accept="image/*" id="logoInput"></div></div>
+<div class="field"><label>Nama studio / developer</label><input id="company" value="YUSMA DIGITAL STUDIO"></div>
+<div class="field"><label>Alamat / kontak</label><textarea id="companyInfo">Banjarmasin, Kalimantan Selatan
+hello@yusmadigital.id · 0812-3456-7890</textarea></div>
+<div class="grid2"><div class="field"><label>Nomor receipt</label><input id="receiptNo" value="INV-2026-014"></div><div class="field"><label>Tanggal</label><input id="date" type="date" value="2026-11-25"></div></div>
+</div>
+<div class="section"><p class="section-title">Klien & proyek</p>
+<div class="field"><label>Nama klien</label><input id="client" value="PT. Example Indonesia"></div>
+<div class="field"><label>Detail klien</label><textarea id="clientInfo">Attn: Bapak Andi
+andi@example.com</textarea></div>
+<div class="field"><label>Nama proyek / layanan</label><input id="project" value="Website Company Profile"></div>
+</div>
+<div class="section"><p class="section-title">Item layanan</p><div class="item-list" id="items"></div><button class="add-row" onclick="addItem()">+ Tambah item</button></div>
+<div class="section"><p class="section-title">Pembayaran</p>
+<div class="grid2"><div class="field"><label>Diskon (Rp)</label><input id="discount" type="number" value="0"></div><div class="field"><label>DP / dibayar (Rp)</label><input id="paid" type="number" value="1500000"></div></div>
+<div class="field"><label>Metode pembayaran</label><input id="payment" value="Transfer Bank · BCA 1234567890"></div>
+<div class="field"><label>Catatan / terms</label><textarea id="note">Terima kasih telah mempercayakan project Anda kepada kami. Revisi sesuai kesepakatan awal.</textarea></div>
+<div class="field"><label>Footer</label><input id="footer" value="Crafted with care · Yusma Digital Studio"></div>
+</div>
+</div>
+</section>
+<div class="preview-wrap">
+<div class="preview-bar"><span>Preview struk · Tampilan cetak</span><span id="sizeLabel">A4 · 210 × 297 mm</span></div>
+<div class="preview-stage"><article class="receipt" id="receipt" data-layout="modern"></article></div>
+</div>
+<section class="panel right-panel">
+<div class="panel-head"><h2>Style & ukuran</h2><small>Customize</small></div>
+<div class="panel-body">
+<div class="section"><p class="section-title">Pilih layout</p><div class="layout-list" id="layouts"></div></div>
+<div class="section"><p class="section-title">Ukuran kertas</p>
+<div class="field"><label>Preset</label><select id="paper"><option value="a4">A4 · 210 × 297 mm</option><option value="a5">A5 · 148 × 210 mm</option><option value="letter">Letter · 216 × 279 mm</option><option value="receipt80">Thermal 80 mm</option><option value="receipt58">Thermal 58 mm</option><option value="square">Square · 150 × 150 mm</option><option value="custom">Custom</option></select></div>
+<div class="grid2" id="customSize" style="display:none"><div class="field"><label>Lebar (mm)</label><input type="number" id="customW" value="180"></div><div class="field"><label>Tinggi (mm)</label><input type="number" id="customH" value="240"></div></div>
+<div class="field"><label>Orientasi</label><select id="orientation"><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></div>
+<div class="field"><label>Margin (mm)</label><input type="number" id="margin" value="12" min="0" max="40"></div>
+</div>
+<div class="section"><p class="section-title">Warna & detail</p>
+<div class="field"><label>Accent color</label><div class="color-row"><input type="color" id="accent" value="#246bfe"><input type="text" id="accentHex" value="#246bfe"></div></div>
+<div class="field"><label>Ukuran font</label><select id="fontSize"><option value="normal">Normal</option><option value="small">Small / compact</option><option value="large">Large</option></select></div>
+<div class="field"><label>Logo position</label><select id="logoPosition"><option value="left">Kiri</option><option value="center">Tengah</option><option value="right">Kanan</option></select></div>
+<div class="note-tip">Gunakan <b>Cetak / Save PDF</b> untuk hasil PDF. Pada dialog print, pilih ukuran kertas dan matikan header/footer browser jika ingin hasil bersih.</div>
+</div>
+</div>
+</section>
+</main>
+<script>
+const layouts=[['modern','Modern'],['minimal','Minimal'],['bold','Bold header'],['split','Split color'],['compact','Compact'],['classic','Classic serif'],['ticket','Ticket']];
+let activeLayout='modern',logoData='',items=[{name:'Website development',qty:1,price:3500000},{name:'Domain & hosting setup',qty:1,price:250000}];
+const presets={a4:[210,297],a5:[148,210],letter:[216,279],receipt80:[80,220],receipt58:[58,180],square:[150,150]};
+const $=id=>document.getElementById(id);
+function money(v){return 'Rp '+Number(v||0).toLocaleString('id-ID')}
+function renderLayouts(){$('layouts').innerHTML=layouts.map(([id,name])=>`<div class="layout-card ${id===activeLayout?'active':''}" data-id="${id}"><div class="layout-thumb"></div><span>${name}</span></div>`).join('');$('layouts').querySelectorAll('.layout-card').forEach(el=>el.onclick=()=>{activeLayout=el.dataset.id;renderLayouts();render()})}
+function renderItems(){$('items').innerHTML=items.map((it,i)=>`<div class="item-row"><input placeholder="Nama item" value="${esc(it.name)}" data-i="${i}" data-k="name"><input type="number" placeholder="Qty" value="${it.qty}" data-i="${i}" data-k="qty"><input type="number" placeholder="Harga" value="${it.price}" data-i="${i}" data-k="price"><button class="icon-btn" onclick="removeItem(${i})">×</button></div>`).join('');$('items').querySelectorAll('input').forEach(el=>el.oninput=()=>{items[el.dataset.i][el.dataset.k]=el.dataset.k==='name'?el.value:Number(el.value);render()})}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function addItem(){items.push({name:'Layanan baru',qty:1,price:0});renderItems();render()}
+function removeItem(i){items.splice(i,1);renderItems();render()}
+function getPaper(){let p=$('paper').value;let [w,h]=presets[p]||[Number($('customW').value)||180,Number($('customH').value)||240];if(p==='custom'){$('customSize').style.display='grid'}else{$('customSize').style.display='none'}if($('orientation').value==='landscape'&&p!=='receipt80'&&p!=='receipt58'){[w,h]=[h,w]}return [w,h]}
+function render(){let [w,h]=getPaper(),margin=Number($('margin').value)||0;let subtotal=items.reduce((s,i)=>s+(Number(i.qty)||0)*(Number(i.price)||0),0),disc=Number($('discount').value)||0,paid=Number($('paid').value)||0,total=Math.max(0,subtotal-disc),balance=total-paid;
+$('sizeLabel').textContent=`${w} × ${h} mm`;let r=$('receipt');r.dataset.layout=activeLayout;r.style.width=Math.min(w*3.4,760)+'px';r.style.minHeight=Math.min(h*3.4,1000)+'px';r.style.padding=Math.max(10,margin*1.15)+'px';r.style.setProperty('--accent',$('accent').value);
+if($('fontSize').value==='small')r.style.fontSize='90%';else if($('fontSize').value==='large')r.style.fontSize='115%';else r.style.fontSize='';
+let align=$('logoPosition').value;let logo=logoData?`<img class="r-logo" src="${logoData}" style="display:block;margin:${align==='center'?'0 auto':align==='right'?'0 0 0 auto':'0'} 10px">`:'';
+let info=esc($('companyInfo').value).replace(/\n/g,'<br>'),clientinfo=esc($('clientInfo').value).replace(/\n/g,'<br>'),date=$('date').value?new Date($('date').value+'T00:00:00').toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}):'—';
+r.innerHTML=`<div class="r-head"><div class="r-company">${logo}<h1>${esc($('company').value)}</h1><p>${info}</p></div><div class="r-meta"><p><b>${esc($('receiptNo').value)}</b></p><p>${date}</p></div></div><div class="r-title">RECEIPT</div><div class="r-sub">${esc($('project').value)}</div><div class="r-info"><div><strong>Received from</strong><span>${esc($('client').value)}</span><br>${clientinfo}</div><div><strong>Project / service</strong><span>${esc($('project').value)}</span><br><span>Payment: ${esc($('payment').value)}</span></div></div><table class="r-table"><thead><tr><th>Description</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead><tbody>${items.map(i=>`<tr><td>${esc(i.name)}</td><td>${i.qty}</td><td>${money(i.price)}</td><td>${money((Number(i.qty)||0)*(Number(i.price)||0))}</td></tr>`).join('')}</tbody></table><div class="totals"><div class="total-row"><span>Subtotal</span><b>${money(subtotal)}</b></div>${disc?`<div class="total-row"><span>Discount</span><b>− ${money(disc)}</b></div>`:''}<div class="total-row grand"><span>Total</span><b>${money(total)}</b></div><div class="total-row"><span>Paid</span><b>${money(paid)}</b></div><div class="total-row"><span>Balance</span><b>${money(balance)}</b></div></div><div class="r-note">${esc($('note').value).replace(/\n/g,'<br>')}</div><div class="r-sign"><span>Received by / authorized</span><span>___________________</span></div><div class="r-barcode-wrap"><div class="r-barcode" id="receiptBarcode" aria-label="Barcode dekoratif"></div><div class="r-barcode-number">${esc($('receiptNo').value)}</div></div><div class="r-footer">${esc($('footer').value)}</div>`;
+let seed = $('receiptNo').value || 'RECEIPT';
+let bars = '';
+for (let i = 0; i < seed.length; i++) {
+  let code = seed.charCodeAt(i);
+  for (let bit = 0; bit < 7; bit++) {
+    let width = ((code >> bit) & 1) ? 3 : 1;
+    bars += `<i style="width:${width}px"></i>`;
+    if (bit % 2 === 0) bars += '<i style="width:1px;background:transparent"></i>';
+  }
+}
+bars += '<i style="width:3px"></i><i style="width:1px"></i><i style="width:2px"></i>';
+r.querySelector('#receiptBarcode').innerHTML = bars;
+r.style.setProperty('--print-width',w+'mm');r.style.setProperty('--print-height',h+'mm');r.style.setProperty('--print-padding',margin+'mm')}
+$('logoInput').onchange=e=>{let f=e.target.files[0];if(!f)return;let reader=new FileReader();reader.onload=()=>{logoData=reader.result;$('logoPreview').innerHTML=`<img src="${logoData}">`;render()};reader.readAsDataURL(f)};
+$('accent').oninput=e=>{$('accentHex').value=e.target.value;render()};$('accentHex').oninput=e=>{if(/^#[0-9a-f]{6}$/i.test(e.target.value)){$('accent').value=e.target.value;render()}};
+document.querySelectorAll('input:not([data-i]),select,textarea').forEach(el=>{if(el.id!=='logoInput'&&el.id!=='accent'&&el.id!=='accentHex')el.addEventListener('input',render)});
+function resetDemo(){items=[{name:'Website development',qty:1,price:3500000},{name:'Domain & hosting setup',qty:1,price:250000}];$('company').value='YUSMA DIGITAL STUDIO';$('companyInfo').value='Banjarmasin, Kalimantan Selatan\\nhello@yusmadigital.id · 0812-3456-7890';$('receiptNo').value='INV-2026-014';$('client').value='PT. Example Indonesia';$('clientInfo').value='Attn: Bapak Andi\\nandi@example.com';$('project').value='Website Company Profile';$('discount').value=0;$('paid').value=1500000;$('payment').value='Transfer Bank · BCA 1234567890';$('note').value='Terima kasih telah mempercayakan project Anda kepada kami. Revisi sesuai kesepakatan awal.';$('footer').value='Crafted with care · Yusma Digital Studio';$('paper').value='a4';$('orientation').value='portrait';$('margin').value=12;$('accent').value='#246bfe';$('accentHex').value='#246bfe';$('fontSize').value='normal';$('logoPosition').value='left';logoData='';$('logoPreview').textContent='Logo';activeLayout='modern';renderLayouts();renderItems();render()}
+renderLayouts();renderItems();render();
+</script>
+</body>
+</html>
