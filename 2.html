@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Receipt Generator — IDR</title>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<style>
+:root{--ink:#17191d;--muted:#6d737d;--line:#e5e7eb;--accent:#236a48;--bg:#f4f6f8;--card:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:var(--ink)}
+.topbar{background:#fff;border-bottom:1px solid var(--line);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-weight:800;letter-spacing:-.04em;font-size:20px}.brand span{color:var(--accent)}.topbar small{color:var(--muted);font-size:12px}
+.layout{max-width:1250px;margin:28px auto;padding:0 20px;display:grid;grid-template-columns:minmax(300px,420px) minmax(320px,1fr);gap:24px;align-items:start}
+.panel,.preview-wrap{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 28px #11182708}
+.panel{padding:22px}.panel h2{font-size:17px;margin:0 0 5px}.sub{font-size:12px;color:var(--muted);margin:0 0 20px}
+label{display:block;font-size:12px;font-weight:700;margin:13px 0 6px;color:#454b55}
+input,select,button{font:inherit}input[type=text],input[type=number],input[type=datetime-local],select{width:100%;padding:10px 11px;border:1px solid #d9dde3;border-radius:8px;background:#fff;color:var(--ink);outline:none}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px #236a4818}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.divider{height:1px;background:var(--line);margin:20px 0}.section-title{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800;margin:0 0 8px}
+.item-row{border:1px solid var(--line);padding:12px;border-radius:10px;margin:10px 0}.item-head{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:800;margin-bottom:7px}.remove{border:0;background:#fff0f0;color:#b42318;border-radius:6px;padding:4px 8px;cursor:pointer}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px}.btn{border:0;border-radius:9px;padding:11px 14px;font-weight:750;cursor:pointer}.primary{background:var(--accent);color:#fff}.secondary{background:#eef1f4;color:#20252c}.outline{background:#fff;border:1px solid var(--line);color:#20252c}
+.preview-wrap{padding:24px;position:sticky;top:20px}.preview-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.preview-head h2{font-size:15px;margin:0}.live{font-size:11px;color:var(--accent);font-weight:800}
+.receipt{max-width:620px;margin:auto;background:white;padding:44px 42px 36px;min-height:720px;color:#111;box-shadow:0 2px 16px #0000000b}
+.receipt-logo{height:100px;display:flex;align-items:center;justify-content:center;margin-bottom:35px;overflow:hidden}.receipt-logo img{width:var(--logo-size,200px);height:var(--logo-size,200px);max-width:100%;max-height:100%;object-fit:contain}.logo-text{font-size:35px;font-weight:900;letter-spacing:-1.5px}.logo-text .logo-mark{color:#23954a}.receipt-meta{display:grid;grid-template-columns:1fr 1.15fr;gap:17px 12px;font-size:15px;margin-bottom:30px;line-height:1.4}.receipt-meta .key{font-weight:800}.receipt-meta .value{overflow-wrap:anywhere}
+.receipt-rule{height:1px;background:#d2d2d2;margin:22px 0}.table-head,.item-line{display:grid;grid-template-columns:minmax(0,1fr) 55px 100px;gap:12px;align-items:start;font-size:15px}.table-head{font-weight:800;margin-bottom:12px}.item-line{margin:9px 0}.qty{text-align:left}.price{text-align:right;white-space:nowrap}.totals{width:55%;margin:28px 0 0 auto;font-size:15px}.total-line{display:flex;justify-content:space-between;gap:12px;margin:9px 0}.total-line.grand{font-weight:850;font-size:17px}.barcode-area{text-align:center;margin-top:90px}.barcode-text{font-size:12px;color:#777;margin-bottom:12px;overflow-wrap:anywhere}.barcode-area svg{width:100%;height:75px}.receipt-foot{font-size:10px;color:#888;text-align:center;margin-top:14px}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.preview-wrap{position:static}.receipt{padding:32px 24px;min-height:0}.barcode-area{margin-top:60px}}
+@media(max-width:480px){.topbar{padding:14px}.layout{padding:0 10px;margin:14px auto}.panel,.preview-wrap{padding:15px}.receipt{padding:26px 17px}.receipt-meta{font-size:12px;gap:13px 8px}.table-head,.item-line{font-size:12px;grid-template-columns:minmax(0,1fr) 35px 76px;gap:7px}.totals{width:70%;font-size:12px}.total-line.grand{font-size:14px}.receipt-logo{height:80px;margin-bottom:25px}}
+@media print{
+ @page{size:A4;margin:12mm}
+ body{background:#fff}.topbar,.panel,.preview-head{display:none!important}.layout{display:block;max-width:none;margin:0;padding:0}.preview-wrap{border:0;box-shadow:none;padding:0;position:static}.receipt{max-width:none;min-height:0;box-shadow:none;padding:15mm 12mm}.barcode-area{margin-top:45mm}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div><div class="brand"><span>RECEIPT</span> STUDIO</div><small>Simple bilingual receipt maker · IDR</small></div>
+  <small>Local preview · Print / Save as PDF</small>
+</header>
+<main class="layout">
+<section class="panel">
+  <h2>Receipt settings</h2><p class="sub">Ubah data di bawah ini; pratinjau akan diperbarui otomatis.</p>
+  <label for="language">Language / Bahasa</label>
+  <select id="language"><option value="id">Bahasa Indonesia</option><option value="en">English</option></select>
+  <div class="divider"></div>
+  <p class="section-title">Logo & identity</p>
+  <label for="logoFile">Upload logo (PNG, JPG, SVG)</label><input id="logoFile" type="file" accept="image/*">
+  <label for="logoSize">Ukuran logo / Logo size</label>
+  <div class="grid2" style="grid-template-columns:1fr auto;align-items:center;gap:12px">
+    <input id="logoSize" type="range" min="50" max="500" step="10" value="200" style="width:100%;accent-color:var(--accent)">
+    <span id="logoSizeValue" style="font-size:12px;font-weight:800;min-width:52px;text-align:right">200 px</span>
+  </div>
+  <div class="grid2"><div><label for="logoName">Nama / brand text</label><input id="logoName" type="text" value="MAIL"></div><div><label for="logoSub">Subjudul (opsional)</label><input id="logoSub" type="text" value="RECEIPT"></div></div>
+  <label for="logoColor">Warna aksen logo</label><input id="logoColor" type="color" value="#23954a" style="width:100%;height:40px;border:1px solid #d9dde3;border-radius:8px;padding:4px;background:white">
+  <div class="divider"></div>
+  <p class="section-title">Receipt details</p>
+  <label for="date">Date / Tanggal</label><input id="date" type="datetime-local">
+  <div class="grid2"><div><label for="operator">Operator</label><input id="operator" type="text" value="Operator Name"></div><div><label for="receiptId">ID</label><input id="receiptId" type="text" value="ID-2026-0001"></div></div>
+  <label for="slip">Slip No</label><input id="slip" type="text" value="SLP-000001">
+  <label for="barcodeValue">Barcode value</label><input id="barcodeValue" type="text" value="ID2026000001">
+  <div class="divider"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><p class="section-title" style="margin:0">Items / Barang</p><button class="btn secondary" type="button" id="addItem">+ Add item</button></div>
+  <div id="itemsEditor"></div>
+  <div class="divider"></div>
+  <div class="grid2"><div><label for="tax">Pajak (%) / Tax (%)</label><input id="tax" type="number" min="0" max="100" step="0.01" value="0"></div><div><label for="footer">Footer (opsional)</label><input id="footer" type="text" value="Terima kasih / Thank you"></div></div>
+  <div class="actions"><button class="btn primary" id="printBtn" type="button">Print / Save PDF</button><button class="btn secondary" id="resetBtn" type="button">Reset example</button></div>
+  <p class="sub" style="margin:14px 0 0">Tip: pilih “Save as PDF” pada dialog print untuk menyimpan receipt sebagai PDF.</p>
+</section>
+<section class="preview-wrap">
+  <div class="preview-head"><h2>Live preview</h2><span class="live">● LIVE</span></div>
+  <article class="receipt" id="receipt">
+    <div class="receipt-logo" id="previewLogo"><div class="logo-text"><span class="logo-mark">M</span>AIL</div></div>
+    <div class="receipt-meta" id="previewMeta"></div>
+    <div class="receipt-rule"></div>
+    <div class="table-head"><div id="descHead">Deskripsi</div><div id="qtyHead">JML</div><div class="price" id="priceHead">Harga</div></div>
+    <div id="previewItems"></div>
+    <div class="receipt-rule"></div>
+    <div class="totals" id="previewTotals"></div>
+    <div class="barcode-area"><div class="barcode-text" id="barcodeCaption"></div><svg id="barcode"></svg><div class="receipt-foot" id="previewFooter"></div></div>
+  </article>
+</section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const translations = {
+ id:{date:'Tanggal:',operator:'Operator:',id:'ID:',slip:'No. Slip:',description:'Deskripsi',qty:'JML',price:'Harga',total:'Total:',tax:'Pajak:',barcode:'Kode transaksi'},
+ en:{date:'Date:',operator:'Operator:',id:'ID:',slip:'Slip No:',description:'Description',qty:'QTY',price:'Price',total:'Total:',tax:'Tax:',barcode:'Transaction code'}
+};
+let items=[{description:'Nama Produk 01',qty:1,price:74000}];
+let uploadedLogo='';
+let currentLogoSize=200;
+function rupiah(n){return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(n)||0)}
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderEditors(){
+ $('itemsEditor').innerHTML=items.map((it,i)=>`<div class="item-row"><div class="item-head"><span>Item ${i+1}</span>${items.length>1?`<button class="remove" data-remove="${i}" type="button">Remove</button>`:''}</div><label>Description / Nama barang</label><input type="text" data-field="description" data-index="${i}" value="${escapeHtml(it.description)}"><div class="grid2"><div><label>QTY</label><input type="number" min="0" step="1" data-field="qty" data-index="${i}" value="${it.qty}"></div><div><label>Price (IDR)</label><input type="number" min="0" step="1" data-field="price" data-index="${i}" value="${it.price}"></div></div></div>`).join('');
+}
+function setDefaultDate(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());$('date').value=d.toISOString().slice(0,16)}
+function render(){
+ const lang=translations[$('language').value], dateVal=$('date').value;
+ const dateText=dateVal?new Date(dateVal).toLocaleString($('language').value==='id'?'id-ID':'en-GB',{dateStyle:'short',timeStyle:'short'}):'—';
+ $('previewMeta').innerHTML=[
+  [lang.date,dateText],[lang.operator,$('operator').value||'—'],[lang.id,$('receiptId').value||'—'],[lang.slip,$('slip').value||'—']
+ ].map(([k,v])=>`<div class="key">${escapeHtml(k)}</div><div class="value">${escapeHtml(v)}</div>`).join('');
+ $('descHead').textContent=lang.description;$('qtyHead').textContent=lang.qty;$('priceHead').textContent=lang.price;
+ $('previewItems').innerHTML=items.map(it=>`<div class="item-line"><div>${escapeHtml(it.description||'—')}</div><div class="qty">${Number(it.qty)||0}</div><div class="price">${rupiah((Number(it.qty)||0)*(Number(it.price)||0))}</div></div>`).join('');
+ const subtotal=items.reduce((s,it)=>s+(Number(it.qty)||0)*(Number(it.price)||0),0), taxRate=Math.max(0,Number($('tax').value)||0), tax=subtotal*taxRate/100, total=subtotal+tax;
+ $('previewTotals').innerHTML=`<div class="total-line grand"><span>${lang.total}</span><span>${rupiah(total)}</span></div>${taxRate?`<div class="total-line"><span>${lang.tax} (${taxRate}%)</span><span>${rupiah(tax)}</span></div>`:''}`;
+ $('barcodeCaption').textContent=$('barcodeValue').value||$('slip').value||'';
+ $('previewFooter').textContent=$('footer').value||'';
+ const logo=$('previewLogo');
+ logo.style.setProperty('--logo-size',currentLogoSize+'px');
+ if(uploadedLogo){logo.innerHTML=`<img src="${uploadedLogo}" alt="Logo" style="width:${currentLogoSize}px;height:${currentLogoSize}px;max-width:100%;max-height:100%;object-fit:contain">`}
+ else {const name=$('logoName').value||'RECEIPT', sub=$('logoSub').value;logo.innerHTML=`<div style="text-align:center"><div class="logo-text" style="font-size:${Math.max(18,Math.round(currentLogoSize*0.175))}px"><span class="logo-mark" style="color:${$('logoColor').value}">${escapeHtml(name.slice(0,1))}</span>${escapeHtml(name.slice(1))}</div>${sub?`<div style="font-size:${Math.max(8,Math.round(currentLogoSize*0.06))}px;letter-spacing:3px;font-weight:700">${escapeHtml(sub)}</div>`:''}</div>`}
+ const barcodeData=$('barcodeValue').value||$('slip').value||'RECEIPT';
+ try{if(window.JsBarcode)JsBarcode('#barcode',barcodeData,{format:'CODE128',displayValue:false,margin:0,height:70,lineColor:'#222'});else $('barcode').innerHTML='';}catch(e){$('barcode').innerHTML='';}
+}
+document.addEventListener('input',e=>{
+ if(e.target.matches('[data-field]')){const i=Number(e.target.dataset.index),field=e.target.dataset.field;items[i][field]=field==='description'?e.target.value:(Number(e.target.value)||0);render();return}
+ if(e.target.id==='logoFile')return;
+ render();
+});
+document.addEventListener('change',e=>{
+ if(e.target.matches('[data-field]')){const i=Number(e.target.dataset.index),field=e.target.dataset.field;items[i][field]=field==='description'?e.target.value:(Number(e.target.value)||0);render();return}
+ if(e.target.id==='logoFile'){const file=e.target.files&&e.target.files[0];if(file){const reader=new FileReader();reader.onload=ev=>{uploadedLogo=ev.target.result;render()};reader.readAsDataURL(file)}}
+ render();
+});
+document.addEventListener('click',e=>{const btn=e.target.closest('[data-remove]');if(btn){items.splice(Number(btn.dataset.remove),1);renderEditors();render()}});
+$('logoSize').addEventListener('input', function(){
+ currentLogoSize=Number(this.value)||200;
+ $('logoSizeValue').textContent=currentLogoSize+' px';
+ render();
+});
+$('addItem').addEventListener('click',()=>{items.push({description:'',qty:1,price:0});renderEditors();render()});
+$('printBtn').addEventListener('click',()=>window.print());
+$('resetBtn').addEventListener('click',()=>{items=[{description:'Nama Produk 01',qty:1,price:74000}];uploadedLogo='';$('logoFile').value='';$('language').value='id';$('logoName').value='MAIL';$('logoSub').value='RECEIPT';$('logoColor').value='#23954a';currentLogoSize=200;$('logoSize').value='200';$('logoSizeValue').textContent='200 px';$('operator').value='Operator Name';$('receiptId').value='ID-2026-0001';$('slip').value='SLP-000001';$('barcodeValue').value='ID2026000001';$('tax').value='0';$('footer').value='Terima kasih / Thank you';setDefaultDate();renderEditors();render()});
+setDefaultDate();renderEditors();render();
+</script>
+</body>
+</html>

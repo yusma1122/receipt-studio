@@ -1,138 +1,1487 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Receipt Generator — IDR</title>
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-<style>
-:root{--ink:#17191d;--muted:#6d737d;--line:#e5e7eb;--accent:#236a48;--bg:#f4f6f8;--card:#fff}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:var(--ink)}
-.topbar{background:#fff;border-bottom:1px solid var(--line);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
-.brand{font-weight:800;letter-spacing:-.04em;font-size:20px}.brand span{color:var(--accent)}.topbar small{color:var(--muted);font-size:12px}
-.layout{max-width:1250px;margin:28px auto;padding:0 20px;display:grid;grid-template-columns:minmax(300px,420px) minmax(320px,1fr);gap:24px;align-items:start}
-.panel,.preview-wrap{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 28px #11182708}
-.panel{padding:22px}.panel h2{font-size:17px;margin:0 0 5px}.sub{font-size:12px;color:var(--muted);margin:0 0 20px}
-label{display:block;font-size:12px;font-weight:700;margin:13px 0 6px;color:#454b55}
-input,select,button{font:inherit}input[type=text],input[type=number],input[type=datetime-local],select{width:100%;padding:10px 11px;border:1px solid #d9dde3;border-radius:8px;background:#fff;color:var(--ink);outline:none}
-input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px #236a4818}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.divider{height:1px;background:var(--line);margin:20px 0}.section-title{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800;margin:0 0 8px}
-.item-row{border:1px solid var(--line);padding:12px;border-radius:10px;margin:10px 0}.item-head{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:800;margin-bottom:7px}.remove{border:0;background:#fff0f0;color:#b42318;border-radius:6px;padding:4px 8px;cursor:pointer}
-.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px}.btn{border:0;border-radius:9px;padding:11px 14px;font-weight:750;cursor:pointer}.primary{background:var(--accent);color:#fff}.secondary{background:#eef1f4;color:#20252c}.outline{background:#fff;border:1px solid var(--line);color:#20252c}
-.preview-wrap{padding:24px;position:sticky;top:20px}.preview-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.preview-head h2{font-size:15px;margin:0}.live{font-size:11px;color:var(--accent);font-weight:800}
-.receipt{max-width:620px;margin:auto;background:white;padding:44px 42px 36px;min-height:720px;color:#111;box-shadow:0 2px 16px #0000000b}
-.receipt-logo{height:100px;display:flex;align-items:center;justify-content:center;margin-bottom:35px;overflow:hidden}.receipt-logo img{width:var(--logo-size,200px);height:var(--logo-size,200px);max-width:100%;max-height:100%;object-fit:contain}.logo-text{font-size:35px;font-weight:900;letter-spacing:-1.5px}.logo-text .logo-mark{color:#23954a}.receipt-meta{display:grid;grid-template-columns:1fr 1.15fr;gap:17px 12px;font-size:15px;margin-bottom:30px;line-height:1.4}.receipt-meta .key{font-weight:800}.receipt-meta .value{overflow-wrap:anywhere}
-.receipt-rule{height:1px;background:#d2d2d2;margin:22px 0}.table-head,.item-line{display:grid;grid-template-columns:minmax(0,1fr) 55px 100px;gap:12px;align-items:start;font-size:15px}.table-head{font-weight:800;margin-bottom:12px}.item-line{margin:9px 0}.qty{text-align:left}.price{text-align:right;white-space:nowrap}.totals{width:55%;margin:28px 0 0 auto;font-size:15px}.total-line{display:flex;justify-content:space-between;gap:12px;margin:9px 0}.total-line.grand{font-weight:850;font-size:17px}.barcode-area{text-align:center;margin-top:90px}.barcode-text{font-size:12px;color:#777;margin-bottom:12px;overflow-wrap:anywhere}.barcode-area svg{width:100%;height:75px}.receipt-foot{font-size:10px;color:#888;text-align:center;margin-top:14px}
-@media(max-width:900px){.layout{grid-template-columns:1fr}.preview-wrap{position:static}.receipt{padding:32px 24px;min-height:0}.barcode-area{margin-top:60px}}
-@media(max-width:480px){.topbar{padding:14px}.layout{padding:0 10px;margin:14px auto}.panel,.preview-wrap{padding:15px}.receipt{padding:26px 17px}.receipt-meta{font-size:12px;gap:13px 8px}.table-head,.item-line{font-size:12px;grid-template-columns:minmax(0,1fr) 35px 76px;gap:7px}.totals{width:70%;font-size:12px}.total-line.grand{font-size:14px}.receipt-logo{height:80px;margin-bottom:25px}}
-@media print{
- @page{size:A4;margin:12mm}
- body{background:#fff}.topbar,.panel,.preview-head{display:none!important}.layout{display:block;max-width:none;margin:0;padding:0}.preview-wrap{border:0;box-shadow:none;padding:0;position:static}.receipt{max-width:none;min-height:0;box-shadow:none;padding:15mm 12mm}.barcode-area{margin-top:45mm}
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Minimalist Receipt & Invoice Generator</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- JsBarcode CDN for crisp vector SVG barcodes -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#fffbeb',
+              100: '#fef3c7',
+              500: '#f59e0b',
+              600: '#d97706',
+              700: '#b45309',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar for clean workspace */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Paper Dimensions & Realistic Shadow */
+    .paper-sheet {
+      background: #ffffff;
+      color: #0f172a;
+      box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+      transition: width 0.25s ease, min-height 0.25s ease, transform 0.15s ease;
+      transform-origin: top center;
+      box-sizing: border-box;
+    }
+
+    .paper-a4 {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 16mm 18mm;
+    }
+
+    .paper-a5 {
+      width: 148mm;
+      min-height: 210mm;
+      padding: 11mm 12mm;
+    }
+
+    .paper-thermal80 {
+      width: 80mm;
+      min-height: 120mm;
+      padding: 6mm 5mm;
+    }
+
+    .paper-thermal58 {
+      width: 58mm;
+      min-height: 100mm;
+      padding: 4mm 3.5mm;
+    }
+
+    /* Print Media Query: Output ONLY the paper cleanly */
+    @media print {
+      @page {
+        margin: 0;
+        size: auto;
+      }
+      html, body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+        overflow: visible !important;
+      }
+      #editor-panel,
+      #preview-toolbar,
+      #toast-container {
+        display: none !important;
+      }
+      #preview-wrapper {
+        position: static !important;
+        width: 100% !important;
+        height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: #ffffff !important;
+        overflow: visible !important;
+        display: block !important;
+      }
+      #paper-scale-container {
+        transform: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+      }
+      .paper-sheet {
+        box-shadow: none !important;
+        margin: 0 !important;
+        transform: none !important;
+        border: none !important;
+      }
+      .paper-a4 {
+        width: 210mm !important;
+        min-height: auto !important;
+      }
+      .paper-a5 {
+        width: 148mm !important;
+        min-height: auto !important;
+      }
+      .paper-thermal80 {
+        width: 80mm !important;
+        min-height: auto !important;
+      }
+      .paper-thermal58 {
+        width: 58mm !important;
+        min-height: auto !important;
+      }
+    }
+  </style>
 </head>
-<body>
-<header class="topbar">
-  <div><div class="brand"><span>RECEIPT</span> STUDIO</div><small>Simple bilingual receipt maker · IDR</small></div>
-  <small>Local preview · Print / Save as PDF</small>
-</header>
-<main class="layout">
-<section class="panel">
-  <h2>Receipt settings</h2><p class="sub">Ubah data di bawah ini; pratinjau akan diperbarui otomatis.</p>
-  <label for="language">Language / Bahasa</label>
-  <select id="language"><option value="id">Bahasa Indonesia</option><option value="en">English</option></select>
-  <div class="divider"></div>
-  <p class="section-title">Logo & identity</p>
-  <label for="logoFile">Upload logo (PNG, JPG, SVG)</label><input id="logoFile" type="file" accept="image/*">
-  <label for="logoSize">Ukuran logo / Logo size</label>
-  <div class="grid2" style="grid-template-columns:1fr auto;align-items:center;gap:12px">
-    <input id="logoSize" type="range" min="50" max="500" step="10" value="200" style="width:100%;accent-color:var(--accent)">
-    <span id="logoSizeValue" style="font-size:12px;font-weight:800;min-width:52px;text-align:right">200 px</span>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased selection:bg-amber-100 selection:text-amber-900">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Main Workspace Split Screen -->
+  <div class="min-h-screen lg:h-screen flex flex-col lg:flex-row lg:overflow-hidden">
+
+    <!-- LEFT PANEL: Controls & Inputs -->
+    <aside id="editor-panel" class="w-full lg:w-[440px] xl:w-[480px] bg-white border-b lg:border-b-0 lg:border-r border-slate-200 flex flex-col lg:h-full shrink-0 z-10">
+      
+      <!-- Top Header -->
+      <header class="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-white sticky top-0 z-20">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-slate-900 text-amber-400 flex items-center justify-center font-mono font-bold text-sm shadow-sm">
+            //
+          </div>
+          <div>
+            <h1 class="text-sm font-bold text-slate-900 tracking-tight leading-none">DocuSlip Studio</h1>
+            <p class="text-[11px] text-slate-500 mt-1">Minimalist Receipt & Invoice Generator</p>
+          </div>
+        </div>
+
+        <!-- Reset & Sample Controls -->
+        <div class="flex items-center gap-1.5" id="reset-controls">
+          <button type="button" id="btn-load-sample" title="Isi contoh data" class="px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition">
+            Contoh
+          </button>
+          <button type="button" id="btn-reset-trigger" class="px-2.5 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-lg transition flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            Reset
+          </button>
+          <!-- Inline Confirm Reset (Hidden by default) -->
+          <div id="reset-confirm-box" class="hidden items-center gap-1 bg-rose-50 border border-rose-200 px-2 py-1 rounded-lg">
+            <span class="text-[11px] font-medium text-rose-700 mr-1">Kosongkan?</span>
+            <button type="button" id="btn-reset-confirm" class="px-2 py-0.5 text-[11px] font-semibold bg-rose-600 text-white rounded hover:bg-rose-700 transition">Ya</button>
+            <button type="button" id="btn-reset-cancel" class="px-2 py-0.5 text-[11px] font-medium text-slate-600 hover:bg-slate-200 rounded transition">Batal</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Scrollable Form Container -->
+      <div class="flex-1 overflow-y-auto p-5 space-y-6">
+
+        <!-- SECTION 1: Tipe Dokumen, Layout & Ukuran Kertas -->
+        <section class="space-y-3.5">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">1. Format & Tata Letak</h2>
+          </div>
+
+          <!-- Document Type Toggle -->
+          <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl">
+            <button type="button" data-doctype="INVOICE" class="doctype-btn py-2 px-3 text-xs font-semibold rounded-lg transition">
+              INVOICE (Tagihan)
+            </button>
+            <button type="button" data-doctype="RECEIPT" class="doctype-btn py-2 px-3 text-xs font-semibold rounded-lg transition">
+              RECEIPT (Kwitansi / Struk)
+            </button>
+          </div>
+
+          <!-- Layout Template Selector -->
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1.5">Gaya Desain (Layout)</label>
+            <div class="grid grid-cols-3 gap-2">
+              <button type="button" data-layout="modern" class="layout-btn p-2.5 border rounded-xl text-left transition flex flex-col gap-1">
+                <span class="text-xs font-semibold">Modern</span>
+                <span class="text-[10px] text-slate-500 leading-tight">Bersih & seimbang</span>
+              </button>
+              <button type="button" data-layout="classic" class="layout-btn p-2.5 border rounded-xl text-left transition flex flex-col gap-1">
+                <span class="text-xs font-semibold">Classic</span>
+                <span class="text-[10px] text-slate-500 leading-tight">Tabel grid formal</span>
+              </button>
+              <button type="button" data-layout="thermal" class="layout-btn p-2.5 border rounded-xl text-left transition flex flex-col gap-1">
+                <span class="text-xs font-semibold">Thermal</span>
+                <span class="text-[10px] text-slate-500 leading-tight">Struk ringkas mono</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Paper Size & Currency -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="paper-size" class="block text-xs font-medium text-slate-600 mb-1">Ukuran Kertas</label>
+              <select id="paper-size" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-800 focus:bg-white focus:border-amber-500 focus:outline-none">
+                <option value="a4">A4 (210 × 297 mm)</option>
+                <option value="a5">A5 (148 × 210 mm)</option>
+                <option value="thermal80">Thermal 80mm (Kasir)</option>
+                <option value="thermal58">Thermal 58mm (Mini)</option>
+              </select>
+            </div>
+            <div>
+              <label for="currency-select" class="block text-xs font-medium text-slate-600 mb-1">Mata Uang</label>
+              <select id="currency-select" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-800 focus:bg-white focus:border-amber-500 focus:outline-none">
+                <option value="IDR">IDR (Rp)</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <hr class="border-slate-100" />
+
+        <!-- SECTION 2: Logo & Kustomisasi Posisi -->
+        <section class="space-y-3.5">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">2. Logo Brand</h2>
+            <button type="button" id="btn-remove-logo" class="hidden text-[11px] font-medium text-rose-600 hover:underline">
+              Hapus Logo
+            </button>
+          </div>
+
+          <!-- Upload Box -->
+          <div class="flex items-center gap-3">
+            <label for="logo-upload" class="flex-1 cursor-pointer border border-dashed border-slate-300 hover:border-amber-500 bg-slate-50 hover:bg-amber-50/30 rounded-xl p-3 transition flex items-center justify-center gap-2 text-xs font-medium text-slate-600">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+              <span id="logo-upload-label">Unggah Logo (PNG, JPG, SVG)</span>
+              <input type="file" id="logo-upload" accept="image/*" class="hidden" />
+            </label>
+          </div>
+
+          <!-- Logo Controls (Size, Alignment, Arrangement) -->
+          <div id="logo-settings-panel" class="space-y-3 bg-slate-50 p-3 rounded-xl border border-slate-200/70">
+            <!-- Size Slider -->
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="font-medium text-slate-600">Ukuran Logo</span>
+                <span id="logo-size-val" class="font-mono text-slate-500">56px</span>
+              </div>
+              <input type="range" id="logo-size" min="24" max="160" value="56" class="w-full accent-slate-900 cursor-pointer h-1.5 bg-slate-200 rounded-lg" />
+            </div>
+
+            <!-- Alignment & Flow -->
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[11px] font-medium text-slate-500 mb-1">Perataan (Align)</label>
+                <div class="grid grid-cols-3 gap-1 bg-white p-1 rounded-lg border border-slate-200">
+                  <button type="button" data-logoalign="left" class="logo-align-btn py-1 text-[11px] font-medium rounded">Kiri</button>
+                  <button type="button" data-logoalign="center" class="logo-align-btn py-1 text-[11px] font-medium rounded">Tengah</button>
+                  <button type="button" data-logoalign="right" class="logo-align-btn py-1 text-[11px] font-medium rounded">Kanan</button>
+                </div>
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-slate-500 mb-1">Posisi Teks</label>
+                <div class="grid grid-cols-2 gap-1 bg-white p-1 rounded-lg border border-slate-200">
+                  <button type="button" data-logoflow="inline" class="logo-flow-btn py-1 text-[11px] font-medium rounded">Sejajar</button>
+                  <button type="button" data-logoflow="stacked" class="logo-flow-btn py-1 text-[11px] font-medium rounded">Atas-Bawah</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <hr class="border-slate-100" />
+
+        <!-- SECTION 3: Pengirim & Penerima -->
+        <section class="space-y-3.5">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">3. Identitas Pengirim & Klien</h2>
+          
+          <div class="space-y-2.5 bg-slate-50/70 p-3 rounded-xl border border-slate-200/70">
+            <span class="text-[11px] font-semibold text-slate-500 block">Dari (Bisnis / Pengirim)</span>
+            <input type="text" id="biz-name" placeholder="Nama Bisnis / Toko Anda" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs focus:border-amber-500 focus:outline-none" />
+            <input type="text" id="biz-address" placeholder="Alamat singkat atau tagline" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs focus:border-amber-500 focus:outline-none" />
+            <input type="text" id="biz-contact" placeholder="Telepon / Email / Website" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs focus:border-amber-500 focus:outline-none" />
+          </div>
+
+          <div class="space-y-2.5 bg-slate-50/70 p-3 rounded-xl border border-slate-200/70">
+            <span id="client-section-label" class="text-[11px] font-semibold text-slate-500 block">Kepada (Klien / Pelanggan)</span>
+            <input type="text" id="client-name" placeholder="Nama Klien / Pelanggan" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs focus:border-amber-500 focus:outline-none" />
+            <input type="text" id="client-info" placeholder="Alamat / No. HP / Email Klien" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs focus:border-amber-500 focus:outline-none" />
+          </div>
+        </section>
+
+        <hr class="border-slate-100" />
+
+        <!-- SECTION 4: Detail Dokumen & Barcode -->
+        <section class="space-y-3.5">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">4. Detail Dokumen & Barcode</h2>
+
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label for="doc-number" class="block text-[11px] font-medium text-slate-600 mb-1">Nomor Dokumen</label>
+              <input type="text" id="doc-number" placeholder="INV-2026-001" class="w-full font-mono rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs focus:bg-white focus:border-amber-500 focus:outline-none" />
+            </div>
+            <div>
+              <label for="doc-status" class="block text-[11px] font-medium text-slate-600 mb-1">Status Pembayaran</label>
+              <select id="doc-status" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium focus:bg-white focus:border-amber-500 focus:outline-none">
+                <option value="PAID">LUNAS (PAID)</option>
+                <option value="UNPAID">BELUM LUNAS (UNPAID)</option>
+                <option value="PARTIAL">DP / SEBAGIAN</option>
+                <option value="NONE">Sembunyikan Badge</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label for="doc-date" class="block text-[11px] font-medium text-slate-600 mb-1">Tanggal</label>
+              <input type="date" id="doc-date" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs focus:bg-white focus:border-amber-500 focus:outline-none" />
+            </div>
+            <div>
+              <label id="doc-secondary-label" for="doc-secondary" class="block text-[11px] font-medium text-slate-600 mb-1">Jatuh Tempo / Metode</label>
+              <input type="text" id="doc-secondary" placeholder="Transfer BCA / QRIS" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs focus:bg-white focus:border-amber-500 focus:outline-none" />
+            </div>
+          </div>
+
+          <!-- Barcode Settings Box -->
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/70 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="barcode-show" checked class="rounded text-slate-900 focus:ring-amber-500" />
+                <span class="text-xs font-semibold text-slate-700">Tampilkan Barcode</span>
+              </label>
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" id="barcode-text" checked class="rounded text-slate-900 focus:ring-amber-500" />
+                <span class="text-[11px] text-slate-600">Teks Kode</span>
+              </label>
+            </div>
+
+            <div id="barcode-options" class="space-y-2 pt-1">
+              <input type="text" id="barcode-value" placeholder="Kosongkan untuk otomatis mengikuti Nomor Dokumen" class="w-full font-mono rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] focus:border-amber-500 focus:outline-none" />
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <div class="flex justify-between text-[10px] text-slate-500 mb-0.5">
+                    <span>Tinggi</span>
+                    <span id="barcode-height-val" class="font-mono">38px</span>
+                  </div>
+                  <input type="range" id="barcode-height" min="20" max="80" value="38" class="w-full accent-slate-900 h-1 bg-slate-200 rounded" />
+                </div>
+                <div>
+                  <div class="flex justify-between text-[10px] text-slate-500 mb-0.5">
+                    <span>Ketebalan Garis</span>
+                    <span id="barcode-width-val" class="font-mono">1.4</span>
+                  </div>
+                  <input type="range" id="barcode-width" min="1" max="2.5" step="0.1" value="1.4" class="w-full accent-slate-900 h-1 bg-slate-200 rounded" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <hr class="border-slate-100" />
+
+        <!-- SECTION 5: Daftar Item / Produk -->
+        <section class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">5. Item & Rincian Biaya</h2>
+            <button type="button" id="btn-add-item" class="px-2.5 py-1 text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 rounded-lg transition flex items-center gap-1">
+              <span>+ Tambah Item</span>
+            </button>
+          </div>
+
+          <div id="items-editor-list" class="space-y-2">
+            <!-- Dynamic Item Rows Injected Here -->
+          </div>
+
+          <!-- Tax & Discount -->
+          <div class="grid grid-cols-2 gap-2.5 pt-2">
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/70">
+              <label for="discount-val" class="block text-[11px] font-medium text-slate-600 mb-1">Diskon (Nominal)</label>
+              <input type="number" id="discount-val" min="0" step="any" placeholder="0" class="w-full font-mono rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs focus:border-amber-500 focus:outline-none" />
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/70">
+              <label for="tax-rate" class="block text-[11px] font-medium text-slate-600 mb-1">Pajak / PPN (%)</label>
+              <input type="number" id="tax-rate" min="0" max="100" step="0.1" placeholder="0" class="w-full font-mono rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs focus:border-amber-500 focus:outline-none" />
+            </div>
+          </div>
+        </section>
+
+        <hr class="border-slate-100" />
+
+        <!-- SECTION 6: Catatan & Tanda Tangan -->
+        <section class="space-y-3 pb-6">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">6. Catatan & Pengesahan</h2>
+          <textarea id="doc-notes" rows="2" placeholder="Catatan tambahan, info rekening pembayaran, atau ucapan terima kasih..." class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:bg-white focus:border-amber-500 focus:outline-none"></textarea>
+          
+          <div class="flex items-center justify-between">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="show-signature" class="rounded text-slate-900 focus:ring-amber-500" />
+              <span class="text-xs font-medium text-slate-600">Tampilkan Kolom Tanda Tangan</span>
+            </label>
+          </div>
+          <input type="text" id="signature-label" placeholder="Nama Penandatangan / Hormat Kami" class="hidden w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs focus:bg-white focus:border-amber-500 focus:outline-none" />
+        </section>
+
+      </div>
+    </aside>
+
+    <!-- RIGHT PANEL: Live Preview Canvas -->
+    <main class="flex-1 flex flex-col bg-slate-200/70 lg:h-full overflow-hidden">
+      
+      <!-- Preview Toolbar -->
+      <div id="preview-toolbar" class="px-4 sm:px-6 py-3 bg-white/90 backdrop-blur border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 z-10">
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            Live Preview
+          </span>
+          <span id="paper-badge" class="px-2 py-0.5 text-[11px] font-mono font-medium bg-slate-100 text-slate-600 rounded border border-slate-200">
+            A4 • 210×297mm
+          </span>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <!-- Zoom Controls -->
+          <div class="hidden sm:flex items-center gap-2 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+            <span class="text-[11px] text-slate-500">Zoom</span>
+            <input type="range" id="zoom-slider" min="50" max="125" value="90" class="w-20 accent-slate-800 h-1 bg-slate-300 rounded cursor-pointer" />
+            <span id="zoom-value" class="text-[11px] font-mono font-medium text-slate-700 w-9 text-right">90%</span>
+          </div>
+
+          <!-- Print / PDF Action -->
+          <button type="button" id="btn-print" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            <span>Cetak / Simpan PDF</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Scrollable Paper Stage -->
+      <div id="preview-wrapper" class="flex-1 overflow-auto p-4 sm:p-8 flex justify-center items-start">
+        <div id="paper-scale-container" class="transition-transform duration-150 origin-top">
+          <!-- The Rendered Paper Document -->
+          <article id="document-canvas" class="paper-sheet paper-a4">
+            <!-- Rendered dynamically via JS -->
+          </article>
+        </div>
+      </div>
+
+    </main>
   </div>
-  <div class="grid2"><div><label for="logoName">Nama / brand text</label><input id="logoName" type="text" value="MAIL"></div><div><label for="logoSub">Subjudul (opsional)</label><input id="logoSub" type="text" value="RECEIPT"></div></div>
-  <label for="logoColor">Warna aksen logo</label><input id="logoColor" type="color" value="#23954a" style="width:100%;height:40px;border:1px solid #d9dde3;border-radius:8px;padding:4px;background:white">
-  <div class="divider"></div>
-  <p class="section-title">Receipt details</p>
-  <label for="date">Date / Tanggal</label><input id="date" type="datetime-local">
-  <div class="grid2"><div><label for="operator">Operator</label><input id="operator" type="text" value="Operator Name"></div><div><label for="receiptId">ID</label><input id="receiptId" type="text" value="ID-2026-0001"></div></div>
-  <label for="slip">Slip No</label><input id="slip" type="text" value="SLP-000001">
-  <label for="barcodeValue">Barcode value</label><input id="barcodeValue" type="text" value="ID2026000001">
-  <div class="divider"></div>
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><p class="section-title" style="margin:0">Items / Barang</p><button class="btn secondary" type="button" id="addItem">+ Add item</button></div>
-  <div id="itemsEditor"></div>
-  <div class="divider"></div>
-  <div class="grid2"><div><label for="tax">Pajak (%) / Tax (%)</label><input id="tax" type="number" min="0" max="100" step="0.01" value="0"></div><div><label for="footer">Footer (opsional)</label><input id="footer" type="text" value="Terima kasih / Thank you"></div></div>
-  <div class="actions"><button class="btn primary" id="printBtn" type="button">Print / Save PDF</button><button class="btn secondary" id="resetBtn" type="button">Reset example</button></div>
-  <p class="sub" style="margin:14px 0 0">Tip: pilih “Save as PDF” pada dialog print untuk menyimpan receipt sebagai PDF.</p>
-</section>
-<section class="preview-wrap">
-  <div class="preview-head"><h2>Live preview</h2><span class="live">● LIVE</span></div>
-  <article class="receipt" id="receipt">
-    <div class="receipt-logo" id="previewLogo"><div class="logo-text"><span class="logo-mark">M</span>AIL</div></div>
-    <div class="receipt-meta" id="previewMeta"></div>
-    <div class="receipt-rule"></div>
-    <div class="table-head"><div id="descHead">Deskripsi</div><div id="qtyHead">JML</div><div class="price" id="priceHead">Harga</div></div>
-    <div id="previewItems"></div>
-    <div class="receipt-rule"></div>
-    <div class="totals" id="previewTotals"></div>
-    <div class="barcode-area"><div class="barcode-text" id="barcodeCaption"></div><svg id="barcode"></svg><div class="receipt-foot" id="previewFooter"></div></div>
-  </article>
-</section>
-</main>
-<script>
-const $ = id => document.getElementById(id);
-const translations = {
- id:{date:'Tanggal:',operator:'Operator:',id:'ID:',slip:'No. Slip:',description:'Deskripsi',qty:'JML',price:'Harga',total:'Total:',tax:'Pajak:',barcode:'Kode transaksi'},
- en:{date:'Date:',operator:'Operator:',id:'ID:',slip:'Slip No:',description:'Description',qty:'QTY',price:'Price',total:'Total:',tax:'Tax:',barcode:'Transaction code'}
-};
-let items=[{description:'Nama Produk 01',qty:1,price:74000}];
-let uploadedLogo='';
-let currentLogoSize=200;
-function rupiah(n){return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(n)||0)}
-function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function renderEditors(){
- $('itemsEditor').innerHTML=items.map((it,i)=>`<div class="item-row"><div class="item-head"><span>Item ${i+1}</span>${items.length>1?`<button class="remove" data-remove="${i}" type="button">Remove</button>`:''}</div><label>Description / Nama barang</label><input type="text" data-field="description" data-index="${i}" value="${escapeHtml(it.description)}"><div class="grid2"><div><label>QTY</label><input type="number" min="0" step="1" data-field="qty" data-index="${i}" value="${it.qty}"></div><div><label>Price (IDR)</label><input type="number" min="0" step="1" data-field="price" data-index="${i}" value="${it.price}"></div></div></div>`).join('');
-}
-function setDefaultDate(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());$('date').value=d.toISOString().slice(0,16)}
-function render(){
- const lang=translations[$('language').value], dateVal=$('date').value;
- const dateText=dateVal?new Date(dateVal).toLocaleString($('language').value==='id'?'id-ID':'en-GB',{dateStyle:'short',timeStyle:'short'}):'—';
- $('previewMeta').innerHTML=[
-  [lang.date,dateText],[lang.operator,$('operator').value||'—'],[lang.id,$('receiptId').value||'—'],[lang.slip,$('slip').value||'—']
- ].map(([k,v])=>`<div class="key">${escapeHtml(k)}</div><div class="value">${escapeHtml(v)}</div>`).join('');
- $('descHead').textContent=lang.description;$('qtyHead').textContent=lang.qty;$('priceHead').textContent=lang.price;
- $('previewItems').innerHTML=items.map(it=>`<div class="item-line"><div>${escapeHtml(it.description||'—')}</div><div class="qty">${Number(it.qty)||0}</div><div class="price">${rupiah((Number(it.qty)||0)*(Number(it.price)||0))}</div></div>`).join('');
- const subtotal=items.reduce((s,it)=>s+(Number(it.qty)||0)*(Number(it.price)||0),0), taxRate=Math.max(0,Number($('tax').value)||0), tax=subtotal*taxRate/100, total=subtotal+tax;
- $('previewTotals').innerHTML=`<div class="total-line grand"><span>${lang.total}</span><span>${rupiah(total)}</span></div>${taxRate?`<div class="total-line"><span>${lang.tax} (${taxRate}%)</span><span>${rupiah(tax)}</span></div>`:''}`;
- $('barcodeCaption').textContent=$('barcodeValue').value||$('slip').value||'';
- $('previewFooter').textContent=$('footer').value||'';
- const logo=$('previewLogo');
- logo.style.setProperty('--logo-size',currentLogoSize+'px');
- if(uploadedLogo){logo.innerHTML=`<img src="${uploadedLogo}" alt="Logo" style="width:${currentLogoSize}px;height:${currentLogoSize}px;max-width:100%;max-height:100%;object-fit:contain">`}
- else {const name=$('logoName').value||'RECEIPT', sub=$('logoSub').value;logo.innerHTML=`<div style="text-align:center"><div class="logo-text" style="font-size:${Math.max(18,Math.round(currentLogoSize*0.175))}px"><span class="logo-mark" style="color:${$('logoColor').value}">${escapeHtml(name.slice(0,1))}</span>${escapeHtml(name.slice(1))}</div>${sub?`<div style="font-size:${Math.max(8,Math.round(currentLogoSize*0.06))}px;letter-spacing:3px;font-weight:700">${escapeHtml(sub)}</div>`:''}</div>`}
- const barcodeData=$('barcodeValue').value||$('slip').value||'RECEIPT';
- try{if(window.JsBarcode)JsBarcode('#barcode',barcodeData,{format:'CODE128',displayValue:false,margin:0,height:70,lineColor:'#222'});else $('barcode').innerHTML='';}catch(e){$('barcode').innerHTML='';}
-}
-document.addEventListener('input',e=>{
- if(e.target.matches('[data-field]')){const i=Number(e.target.dataset.index),field=e.target.dataset.field;items[i][field]=field==='description'?e.target.value:(Number(e.target.value)||0);render();return}
- if(e.target.id==='logoFile')return;
- render();
-});
-document.addEventListener('change',e=>{
- if(e.target.matches('[data-field]')){const i=Number(e.target.dataset.index),field=e.target.dataset.field;items[i][field]=field==='description'?e.target.value:(Number(e.target.value)||0);render();return}
- if(e.target.id==='logoFile'){const file=e.target.files&&e.target.files[0];if(file){const reader=new FileReader();reader.onload=ev=>{uploadedLogo=ev.target.result;render()};reader.readAsDataURL(file)}}
- render();
-});
-document.addEventListener('click',e=>{const btn=e.target.closest('[data-remove]');if(btn){items.splice(Number(btn.dataset.remove),1);renderEditors();render()}});
-$('logoSize').addEventListener('input', function(){
- currentLogoSize=Number(this.value)||200;
- $('logoSizeValue').textContent=currentLogoSize+' px';
- render();
-});
-$('addItem').addEventListener('click',()=>{items.push({description:'',qty:1,price:0});renderEditors();render()});
-$('printBtn').addEventListener('click',()=>window.print());
-$('resetBtn').addEventListener('click',()=>{items=[{description:'Nama Produk 01',qty:1,price:74000}];uploadedLogo='';$('logoFile').value='';$('language').value='id';$('logoName').value='MAIL';$('logoSub').value='RECEIPT';$('logoColor').value='#23954a';currentLogoSize=200;$('logoSize').value='200';$('logoSizeValue').textContent='200 px';$('operator').value='Operator Name';$('receiptId').value='ID-2026-0001';$('slip').value='SLP-000001';$('barcodeValue').value='ID2026000001';$('tax').value='0';$('footer').value='Terima kasih / Thank you';setDefaultDate();renderEditors();render()});
-setDefaultDate();renderEditors();render();
-</script>
+
+  <script>
+    /**
+     * Minimalist Receipt & Invoice Generator
+     * Single-file stateful architecture with localStorage persistence & SVG Barcode
+     */
+
+    const STORAGE_KEY = 'docuslip_state_v1';
+
+    // Default Sample State
+    const getSampleState = () => ({
+      docType: 'INVOICE', // 'INVOICE' | 'RECEIPT'
+      layout: 'modern',   // 'modern' | 'classic' | 'thermal'
+      paperSize: 'a4',    // 'a4' | 'a5' | 'thermal80' | 'thermal58'
+      currency: 'IDR',    // 'IDR' | 'USD' | 'EUR'
+      zoom: 90,
+
+      // Logo Settings
+      logoDataUrl: '',
+      logoSize: 56,
+      logoAlign: 'left',  // 'left' | 'center' | 'right'
+      logoFlow: 'inline', // 'inline' | 'stacked'
+
+      // Business Info
+      bizName: 'Studio Ruang Minimal',
+      bizAddress: 'Jl. Jend. Sudirman No. 45, Banjarmasin',
+      bizContact: 'halo@ruangminimal.id • +62 812-5550-8899',
+
+      // Client Info
+      clientName: 'PT Borneo Kreatif Nusantara',
+      clientInfo: 'Jl. A. Yani Km. 4, Banjarmasin',
+
+      // Metadata
+      docNumber: 'INV-2026-0084',
+      docStatus: 'PAID',
+      docDate: new Date().toISOString().split('T')[0],
+      docSecondary: 'Transfer BCA • 8820192831',
+
+      // Barcode
+      barcodeShow: true,
+      barcodeText: true,
+      barcodeValue: '',
+      barcodeHeight: 38,
+      barcodeWidth: 1.4,
+
+      // Line Items
+      items: [
+        { id: 1, desc: 'Desain Identitas Visual & Brand Guideline', qty: 1, price: 2500000 },
+        { id: 2, desc: 'Pengembangan Landing Page Responsif', qty: 1, price: 3200000 },
+        { id: 3, desc: 'Maintenance & Optimasi Server (Bulanan)', qty: 2, price: 350000 }
+      ],
+
+      // Totals
+      discount: 200000,
+      taxRate: 11,
+
+      // Footer
+      notes: 'Terima kasih atas kepercayaan Anda. Pembayaran yang sudah lunas tidak dapat dikembalikan.',
+      showSignature: true,
+      signatureLabel: 'Ahmad Fauzi — Direktur Kreatif'
+    });
+
+    // Empty/Blank State for Reset
+    const getBlankState = (currentLayoutSettings) => ({
+      docType: currentLayoutSettings.docType || 'INVOICE',
+      layout: currentLayoutSettings.layout || 'modern',
+      paperSize: currentLayoutSettings.paperSize || 'a4',
+      currency: currentLayoutSettings.currency || 'IDR',
+      zoom: currentLayoutSettings.zoom || 90,
+
+      logoDataUrl: '',
+      logoSize: 56,
+      logoAlign: 'left',
+      logoFlow: 'inline',
+
+      bizName: '',
+      bizAddress: '',
+      bizContact: '',
+
+      clientName: '',
+      clientInfo: '',
+
+      docNumber: '',
+      docStatus: 'NONE',
+      docDate: new Date().toISOString().split('T')[0],
+      docSecondary: '',
+
+      barcodeShow: true,
+      barcodeText: true,
+      barcodeValue: '',
+      barcodeHeight: 38,
+      barcodeWidth: 1.4,
+
+      items: [
+        { id: Date.now(), desc: '', qty: 1, price: 0 }
+      ],
+
+      discount: 0,
+      taxRate: 0,
+
+      notes: '',
+      showSignature: false,
+      signatureLabel: ''
+    });
+
+    // Application State
+    let state = loadState();
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          return { ...getSampleState(), ...JSON.parse(saved) };
+        }
+      } catch (e) {
+        console.warn('Gagal memuat state dari localStorage:', e);
+      }
+      return getSampleState();
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        console.warn('Gagal menyimpan state:', e);
+      }
+    }
+
+    // Toast Notification Utility
+    function showToast(message) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-xl shadow-lg border border-slate-700 flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0';
+      toast.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 2400);
+    }
+
+    // Formatting Helpers
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function formatCurrency(amount, currencyCode) {
+      const num = Number(amount) || 0;
+      if (currencyCode === 'IDR') {
+        return 'Rp ' + Math.round(num).toLocaleString('id-ID');
+      }
+      if (currencyCode === 'USD') {
+        return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+      if (currencyCode === 'EUR') {
+        return '€' + num.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+      return num.toLocaleString('id-ID');
+    }
+
+    function formatDateReadable(dateStr) {
+      if (!dateStr) return '-';
+      try {
+        const [y, m, d] = dateStr.split('-');
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        return `${parseInt(d, 10)} ${months[parseInt(m, 10) - 1]} ${y}`;
+      } catch {
+        return dateStr;
+      }
+    }
+
+    // Sync Form Inputs with State
+    function syncInputsFromState() {
+      // Doc Type buttons
+      document.querySelectorAll('.doctype-btn').forEach(btn => {
+        const active = btn.dataset.doctype === state.docType;
+        btn.className = `doctype-btn py-2 px-3 text-xs font-semibold rounded-lg transition ${
+          active ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+        }`;
+      });
+
+      // Layout buttons
+      document.querySelectorAll('.layout-btn').forEach(btn => {
+        const active = btn.dataset.layout === state.layout;
+        btn.className = `layout-btn p-2.5 border rounded-xl text-left transition flex flex-col gap-1 ${
+          active ? 'border-slate-900 bg-slate-900 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+        }`;
+        const sub = btn.querySelector('span:last-child');
+        if (sub) sub.className = `text-[10px] leading-tight ${active ? 'text-slate-300' : 'text-slate-500'}`;
+      });
+
+      // Logo align buttons
+      document.querySelectorAll('.logo-align-btn').forEach(btn => {
+        const active = btn.dataset.logoalign === state.logoAlign;
+        btn.className = `logo-align-btn py-1 text-[11px] font-medium rounded transition ${
+          active ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+        }`;
+      });
+
+      // Logo flow buttons
+      document.querySelectorAll('.logo-flow-btn').forEach(btn => {
+        const active = btn.dataset.logoflow === state.logoFlow;
+        btn.className = `logo-flow-btn py-1 text-[11px] font-medium rounded transition ${
+          active ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+        }`;
+      });
+
+      // Selects & Sliders
+      document.getElementById('paper-size').value = state.paperSize;
+      document.getElementById('currency-select').value = state.currency;
+      document.getElementById('logo-size').value = state.logoSize;
+      document.getElementById('logo-size-val').textContent = `${state.logoSize}px`;
+
+      const removeLogoBtn = document.getElementById('btn-remove-logo');
+      const uploadLabel = document.getElementById('logo-upload-label');
+      if (state.logoDataUrl) {
+        removeLogoBtn.classList.remove('hidden');
+        uploadLabel.textContent = 'Ganti File Logo';
+      } else {
+        removeLogoBtn.classList.add('hidden');
+        uploadLabel.textContent = 'Unggah Logo (PNG, JPG, SVG)';
+      }
+
+      // Text Inputs
+      document.getElementById('biz-name').value = state.bizName;
+      document.getElementById('biz-address').value = state.bizAddress;
+      document.getElementById('biz-contact').value = state.bizContact;
+
+      document.getElementById('client-name').value = state.clientName;
+      document.getElementById('client-info').value = state.clientInfo;
+      document.getElementById('client-section-label').textContent =
+        state.docType === 'RECEIPT' ? 'Diterima Dari (Pelanggan)' : 'Kepada (Klien / Ditagihkan Ke)';
+
+      document.getElementById('doc-number').value = state.docNumber;
+      document.getElementById('doc-status').value = state.docStatus;
+      document.getElementById('doc-date').value = state.docDate;
+      document.getElementById('doc-secondary').value = state.docSecondary;
+      document.getElementById('doc-secondary-label').textContent =
+        state.docType === 'RECEIPT' ? 'Metode Pembayaran' : 'Jatuh Tempo / Info Bayar';
+
+      // Barcode
+      document.getElementById('barcode-show').checked = state.barcodeShow;
+      document.getElementById('barcode-text').checked = state.barcodeText;
+      document.getElementById('barcode-value').value = state.barcodeValue;
+      document.getElementById('barcode-height').value = state.barcodeHeight;
+      document.getElementById('barcode-height-val').textContent = `${state.barcodeHeight}px`;
+      document.getElementById('barcode-width').value = state.barcodeWidth;
+      document.getElementById('barcode-width-val').textContent = state.barcodeWidth;
+      document.getElementById('barcode-options').style.display = state.barcodeShow ? 'block' : 'none';
+
+      // Totals & Notes
+      document.getElementById('discount-val').value = state.discount || '';
+      document.getElementById('tax-rate').value = state.taxRate || '';
+      document.getElementById('doc-notes').value = state.notes;
+      document.getElementById('show-signature').checked = state.showSignature;
+      const sigInput = document.getElementById('signature-label');
+      sigInput.value = state.signatureLabel;
+      sigInput.classList.toggle('hidden', !state.showSignature);
+
+      // Zoom
+      document.getElementById('zoom-slider').value = state.zoom;
+      document.getElementById('zoom-value').textContent = `${state.zoom}%`;
+
+      renderItemsEditor();
+    }
+
+    // Render Editable Line Items in Left Sidebar
+    function renderItemsEditor() {
+      const list = document.getElementById('items-editor-list');
+      list.innerHTML = '';
+
+      state.items.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl space-y-2';
+        row.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="text-[11px] font-mono font-semibold text-slate-400 w-4">${index + 1}.</span>
+            <input type="text" data-idx="${index}" data-field="desc" value="${escapeHtml(item.desc)}" placeholder="Nama item atau deskripsi jasa..." class="item-input flex-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:border-amber-500 focus:outline-none" />
+            <button type="button" data-idx="${index}" class="btn-del-item p-1 text-slate-400 hover:text-rose-600 rounded transition" title="Hapus item">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+          </div>
+          <div class="grid grid-cols-12 gap-2 pl-6 items-center">
+            <div class="col-span-4">
+              <label class="block text-[10px] text-slate-400 mb-0.5">Qty</label>
+              <input type="number" data-idx="${index}" data-field="qty" min="0" step="any" value="${item.qty}" class="item-input w-full font-mono rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs focus:border-amber-500 focus:outline-none" />
+            </div>
+            <div class="col-span-8">
+              <label class="block text-[10px] text-slate-400 mb-0.5">Harga Satuan</label>
+              <input type="number" data-idx="${index}" data-field="price" min="0" step="any" value="${item.price}" class="item-input w-full font-mono rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs focus:border-amber-500 focus:outline-none" />
+            </div>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    // Calculate Financial Totals
+    function calculateTotals() {
+      const subtotal = state.items.reduce((sum, item) => {
+        return sum + ((Number(item.qty) || 0) * (Number(item.price) || 0));
+      }, 0);
+      const discount = Math.max(0, Number(state.discount) || 0);
+      const taxableAmount = Math.max(0, subtotal - discount);
+      const taxRate = Math.max(0, Number(state.taxRate) || 0);
+      const taxAmount = taxableAmount * (taxRate / 100);
+      const grandTotal = taxableAmount + taxAmount;
+
+      return { subtotal, discount, taxRate, taxAmount, grandTotal };
+    }
+
+    // Build Logo & Brand Header Block
+    function renderBrandHeader(isThermal) {
+      const hasLogo = Boolean(state.logoDataUrl);
+      const logoSize = isThermal ? Math.min(state.logoSize, 72) : state.logoSize;
+      
+      const alignMap = {
+        left: 'items-start text-left justify-start',
+        center: 'items-center text-center justify-center',
+        right: 'items-end text-right justify-end'
+      };
+
+      const flexAlignMap = {
+        left: 'justify-start text-left',
+        center: 'justify-center text-center',
+        right: 'justify-end text-right'
+      };
+
+      const logoImgHtml = hasLogo
+        ? `<img src="${state.logoDataUrl}" alt="Logo" style="height: ${logoSize}px; width: auto; max-width: 100%; object-fit: contain;" class="shrink-0" />`
+        : '';
+
+      const bizTitleSize = isThermal ? 'text-sm font-bold' : 'text-lg font-bold tracking-tight';
+      const bizSubSize = isThermal ? 'text-[10px] leading-snug' : 'text-xs leading-relaxed';
+
+      const textBlockHtml = `
+        <div class="min-w-0">
+          <div class="${bizTitleSize} text-slate-900">${escapeHtml(state.bizName) || '<span class="text-slate-300 italic">Nama Bisnis Anda</span>'}</div>
+          ${state.bizAddress ? `<div class="${bizSubSize} text-slate-500 mt-0.5">${escapeHtml(state.bizAddress)}</div>` : ''}
+          ${state.bizContact ? `<div class="${bizSubSize} text-slate-500">${escapeHtml(state.bizContact)}</div>` : ''}
+        </div>
+      `;
+
+      if (!hasLogo) {
+        return `<div class="flex flex-col ${alignMap[state.logoAlign]}">${textBlockHtml}</div>`;
+      }
+
+      if (state.logoFlow === 'stacked' || isThermal) {
+        return `
+          <div class="flex flex-col gap-2 ${alignMap[state.logoAlign]}">
+            ${logoImgHtml}
+            ${textBlockHtml}
+          </div>
+        `;
+      }
+
+      // Inline flow
+      if (state.logoAlign === 'right') {
+        return `
+          <div class="flex items-center gap-3.5 ${flexAlignMap.right}">
+            ${textBlockHtml}
+            ${logoImgHtml}
+          </div>
+        `;
+      }
+
+      return `
+        <div class="flex items-center gap-3.5 ${flexAlignMap[state.logoAlign]}">
+          ${logoImgHtml}
+          ${textBlockHtml}
+        </div>
+      `;
+    }
+
+    // Status Badge HTML
+    function renderStatusBadge(isThermal) {
+      if (!state.docStatus || state.docStatus === 'NONE') return '';
+      const styles = {
+        PAID: 'border-emerald-600 text-emerald-700 bg-emerald-50/80',
+        UNPAID: 'border-rose-600 text-rose-700 bg-rose-50/80',
+        PARTIAL: 'border-amber-600 text-amber-700 bg-amber-50/80'
+      };
+      const labels = {
+        PAID: 'LUNAS / PAID',
+        UNPAID: 'BELUM LUNAS',
+        PARTIAL: 'DP / SEBAGIAN'
+      };
+      const sizeClass = isThermal ? 'text-[9px] px-1.5 py-0.5' : 'text-[10px] px-2.5 py-0.5';
+      return `<span class="inline-block font-mono font-bold uppercase tracking-wider border rounded ${sizeClass} ${styles[state.docStatus] || ''}">${labels[state.docStatus]}</span>`;
+    }
+
+    // Main Preview Renderer
+    function renderPreview() {
+      const canvas = document.getElementById('document-canvas');
+      const paperBadge = document.getElementById('paper-badge');
+      const scaleContainer = document.getElementById('paper-scale-container');
+
+      // Update Paper Size Class & Badge
+      canvas.className = `paper-sheet paper-${state.paperSize}`;
+      const badgeLabels = {
+        a4: 'A4 • 210×297mm',
+        a5: 'A5 • 148×210mm',
+        thermal80: 'Thermal • 80mm',
+        thermal58: 'Thermal • 58mm'
+      };
+      paperBadge.textContent = badgeLabels[state.paperSize];
+
+      // Apply Zoom
+      scaleContainer.style.transform = `scale(${state.zoom / 100})`;
+
+      const isThermalPaper = state.paperSize === 'thermal80' || state.paperSize === 'thermal58';
+      const isMini58 = state.paperSize === 'thermal58';
+      const totals = calculateTotals();
+      const docHeading = state.docType === 'RECEIPT' ? 'RECEIPT / KWITANSI' : 'INVOICE';
+      const clientHeading = state.docType === 'RECEIPT' ? 'Diterima Dari' : 'Ditagihkan Kepada';
+      const secondaryHeading = state.docType === 'RECEIPT' ? 'Metode Bayar' : 'Keterangan / Tempo';
+
+      const barcodeHtml = state.barcodeShow
+        ? `<div class="barcode-box flex flex-col items-center justify-center overflow-hidden">
+             <svg id="rendered-barcode" class="max-w-full"></svg>
+           </div>`
+        : '';
+
+      // LAYOUT 3: THERMAL / COMPACT (or forced compact proportions on 80mm/58mm)
+      if (state.layout === 'thermal' || isThermalPaper) {
+        const textBase = isMini58 ? 'text-[10px]' : 'text-[11px]';
+        const textSmall = isMini58 ? 'text-[9px]' : 'text-[10px]';
+
+        canvas.innerHTML = `
+          <div class="${textBase} font-sans text-slate-900 space-y-3">
+            <!-- Header -->
+            <div class="border-b border-dashed border-slate-400 pb-3">
+              ${renderBrandHeader(true)}
+            </div>
+
+            <!-- Doc Info -->
+            <div class="border-b border-dashed border-slate-400 pb-2.5 space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-mono font-bold tracking-wider uppercase">${docHeading}</span>
+                ${renderStatusBadge(true)}
+              </div>
+              <div class="flex justify-between ${textSmall} text-slate-600">
+                <span>No. Dokumen</span>
+                <span class="font-mono font-semibold text-slate-900">${escapeHtml(state.docNumber) || '-'}</span>
+              </div>
+              <div class="flex justify-between ${textSmall} text-slate-600">
+                <span>Tanggal</span>
+                <span class="font-mono">${formatDateReadable(state.docDate)}</span>
+              </div>
+              ${state.docSecondary ? `
+              <div class="flex justify-between ${textSmall} text-slate-600">
+                <span>${secondaryHeading}</span>
+                <span class="text-right font-medium text-slate-800">${escapeHtml(state.docSecondary)}</span>
+              </div>` : ''}
+              ${state.clientName ? `
+              <div class="pt-1 mt-1 border-t border-dotted border-slate-300 ${textSmall}">
+                <span class="text-slate-500">${clientHeading}: </span>
+                <span class="font-semibold text-slate-900">${escapeHtml(state.clientName)}</span>
+                ${state.clientInfo ? `<div class="text-slate-500">${escapeHtml(state.clientInfo)}</div>` : ''}
+              </div>` : ''}
+            </div>
+
+            <!-- Items -->
+            <div class="border-b border-dashed border-slate-400 pb-2.5 space-y-2">
+              ${state.items.map(item => {
+                const lineTotal = (Number(item.qty) || 0) * (Number(item.price) || 0);
+                return `
+                  <div>
+                    <div class="font-medium text-slate-900 leading-snug">${escapeHtml(item.desc) || '<span class="text-slate-300 italic">Item tanpa nama</span>'}</div>
+                    <div class="flex justify-between ${textSmall} font-mono text-slate-600 mt-0.5">
+                      <span>${item.qty} × ${formatCurrency(item.price, state.currency)}</span>
+                      <span class="font-semibold text-slate-900">${formatCurrency(lineTotal, state.currency)}</span>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+
+            <!-- Totals -->
+            <div class="space-y-1 ${textSmall}">
+              <div class="flex justify-between text-slate-600">
+                <span>Subtotal</span>
+                <span class="font-mono">${formatCurrency(totals.subtotal, state.currency)}</span>
+              </div>
+              ${totals.discount > 0 ? `
+              <div class="flex justify-between text-slate-600">
+                <span>Diskon</span>
+                <span class="font-mono">-${formatCurrency(totals.discount, state.currency)}</span>
+              </div>` : ''}
+              ${totals.taxRate > 0 ? `
+              <div class="flex justify-between text-slate-600">
+                <span>Pajak (${totals.taxRate}%)</span>
+                <span class="font-mono">${formatCurrency(totals.taxAmount, state.currency)}</span>
+              </div>` : ''}
+              <div class="flex justify-between items-baseline pt-1.5 mt-1 border-t border-slate-900 font-bold ${isMini58 ? 'text-xs' : 'text-sm'}">
+                <span>TOTAL</span>
+                <span class="font-mono">${formatCurrency(totals.grandTotal, state.currency)}</span>
+              </div>
+            </div>
+
+            <!-- Barcode -->
+            ${state.barcodeShow ? `<div class="pt-2 border-t border-dashed border-slate-300">${barcodeHtml}</div>` : ''}
+
+            <!-- Notes & Signature -->
+            ${state.notes ? `<div class="${textSmall} text-center text-slate-500 pt-1 leading-relaxed">${escapeHtml(state.notes)}</div>` : ''}
+            ${state.showSignature ? `
+              <div class="pt-6 text-center ${textSmall}">
+                <div class="w-32 mx-auto border-b border-slate-400 mb-1"></div>
+                <div class="text-slate-600">${escapeHtml(state.signatureLabel) || 'Tanda Tangan'}</div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      } 
+      // LAYOUT 2: CLASSIC CORPORATE
+      else if (state.layout === 'classic') {
+        canvas.innerHTML = `
+          <div class="h-full flex flex-col justify-between text-slate-900">
+            <div>
+              <!-- Top Formal Header -->
+              <div class="border-b-2 border-slate-900 pb-5 mb-6 flex justify-between items-start gap-6">
+                <div class="flex-1">
+                  ${renderBrandHeader(false)}
+                </div>
+                <div class="text-right shrink-0">
+                  <div class="text-2xl font-bold tracking-tight uppercase text-slate-900">${docHeading}</div>
+                  <div class="font-mono text-xs text-slate-600 mt-1">#${escapeHtml(state.docNumber) || '0000'}</div>
+                  <div class="mt-2">${renderStatusBadge(false)}</div>
+                </div>
+              </div>
+
+              <!-- Info Grid Box -->
+              <div class="grid grid-cols-2 border border-slate-300 mb-6 text-xs">
+                <div class="p-3.5 border-r border-slate-300">
+                  <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">${clientHeading}</div>
+                  <div class="font-bold text-sm text-slate-900">${escapeHtml(state.clientName) || '<span class="text-slate-300 italic">Nama Klien</span>'}</div>
+                  ${state.clientInfo ? `<div class="text-slate-600 mt-0.5">${escapeHtml(state.clientInfo)}</div>` : ''}
+                </div>
+                <div class="p-3.5 space-y-1.5 bg-slate-50/50">
+                  <div class="flex justify-between">
+                    <span class="text-slate-500">Tanggal Terbit:</span>
+                    <span class="font-mono font-medium">${formatDateReadable(state.docDate)}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-500">${secondaryHeading}:</span>
+                    <span class="font-medium text-right">${escapeHtml(state.docSecondary) || '-'}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-500">Mata Uang:</span>
+                    <span class="font-mono font-medium">${state.currency}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Structured Table -->
+              <table class="w-full border-collapse border border-slate-300 text-xs mb-6">
+                <thead>
+                  <tr class="bg-slate-900 text-white text-[11px] uppercase tracking-wider">
+                    <th class="py-2.5 px-3 text-left border border-slate-900 w-10">No</th>
+                    <th class="py-2.5 px-3 text-left border border-slate-900">Deskripsi</th>
+                    <th class="py-2.5 px-3 text-right border border-slate-900 w-16">Qty</th>
+                    <th class="py-2.5 px-3 text-right border border-slate-900 w-32">Harga</th>
+                    <th class="py-2.5 px-3 text-right border border-slate-900 w-36">Jumlah</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${state.items.map((item, idx) => {
+                    const lineTotal = (Number(item.qty) || 0) * (Number(item.price) || 0);
+                    return `
+                      <tr class="${idx % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'}">
+                        <td class="py-2.5 px-3 border border-slate-300 font-mono text-slate-500">${idx + 1}</td>
+                        <td class="py-2.5 px-3 border border-slate-300 font-medium">${escapeHtml(item.desc) || '<span class="text-slate-300 italic">-</span>'}</td>
+                        <td class="py-2.5 px-3 border border-slate-300 text-right font-mono">${item.qty}</td>
+                        <td class="py-2.5 px-3 border border-slate-300 text-right font-mono">${formatCurrency(item.price, state.currency)}</td>
+                        <td class="py-2.5 px-3 border border-slate-300 text-right font-mono font-semibold">${formatCurrency(lineTotal, state.currency)}</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+
+              <!-- Totals & Barcode Row -->
+              <div class="flex justify-between items-start gap-6">
+                <div class="pt-1">
+                  ${barcodeHtml}
+                </div>
+                <div class="w-64 border border-slate-300 text-xs">
+                  <div class="flex justify-between px-3 py-2 border-b border-slate-200">
+                    <span class="text-slate-600">Subtotal</span>
+                    <span class="font-mono font-medium">${formatCurrency(totals.subtotal, state.currency)}</span>
+                  </div>
+                  ${totals.discount > 0 ? `
+                  <div class="flex justify-between px-3 py-2 border-b border-slate-200">
+                    <span class="text-slate-600">Diskon</span>
+                    <span class="font-mono text-rose-600">-${formatCurrency(totals.discount, state.currency)}</span>
+                  </div>` : ''}
+                  ${totals.taxRate > 0 ? `
+                  <div class="flex justify-between px-3 py-2 border-b border-slate-200">
+                    <span class="text-slate-600">Pajak (${totals.taxRate}%)</span>
+                    <span class="font-mono">${formatCurrency(totals.taxAmount, state.currency)}</span>
+                  </div>` : ''}
+                  <div class="flex justify-between px-3 py-2.5 bg-slate-900 text-white font-bold text-sm">
+                    <span>TOTAL</span>
+                    <span class="font-mono">${formatCurrency(totals.grandTotal, state.currency)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-10 pt-4 border-t border-slate-300 flex justify-between items-end gap-6 text-xs">
+              <div class="max-w-md text-slate-500 leading-relaxed">
+                ${state.notes ? `<div class="font-semibold text-slate-700 mb-0.5">Catatan:</div><div>${escapeHtml(state.notes)}</div>` : ''}
+              </div>
+              ${state.showSignature ? `
+                <div class="text-center shrink-0">
+                  <div class="h-14"></div>
+                  <div class="w-44 border-b border-slate-800 mb-1.5"></div>
+                  <div class="font-medium text-slate-800">${escapeHtml(state.signatureLabel) || 'Pengesahan'}</div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      } 
+      // LAYOUT 1: MODERN CLEAN (Default)
+      else {
+        canvas.innerHTML = `
+          <div class="h-full flex flex-col justify-between text-slate-900">
+            <div>
+              <!-- Modern Airy Header -->
+              <div class="flex justify-between items-start gap-6 pb-7 border-b border-slate-200">
+                <div class="flex-1">
+                  ${renderBrandHeader(false)}
+                </div>
+                <div class="text-right shrink-0 space-y-1">
+                  <div class="inline-block text-xs font-mono font-bold tracking-widest uppercase text-amber-600">
+                    ${docHeading}
+                  </div>
+                  <div class="text-lg font-mono font-bold text-slate-900">
+                    ${escapeHtml(state.docNumber) || '<span class="text-slate-300">#NO-DOKUMEN</span>'}
+                  </div>
+                  <div>${renderStatusBadge(false)}</div>
+                </div>
+              </div>
+
+              <!-- Client & Metadata Row -->
+              <div class="grid grid-cols-12 gap-6 py-6">
+                <div class="col-span-7">
+                  <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">${clientHeading}</div>
+                  <div class="text-sm font-bold text-slate-900">${escapeHtml(state.clientName) || '<span class="text-slate-300 italic">Nama Klien / Pelanggan</span>'}</div>
+                  ${state.clientInfo ? `<div class="text-xs text-slate-500 mt-1 leading-relaxed">${escapeHtml(state.clientInfo)}</div>` : ''}
+                </div>
+                <div class="col-span-5 space-y-2 text-xs">
+                  <div class="flex justify-between border-b border-slate-100 pb-1.5">
+                    <span class="text-slate-400">Tanggal</span>
+                    <span class="font-mono font-medium text-slate-800">${formatDateReadable(state.docDate)}</span>
+                  </div>
+                  ${state.docSecondary ? `
+                  <div class="flex justify-between border-b border-slate-100 pb-1.5">
+                    <span class="text-slate-400">${secondaryHeading}</span>
+                    <span class="font-medium text-slate-800 text-right">${escapeHtml(state.docSecondary)}</span>
+                  </div>` : ''}
+                </div>
+              </div>
+
+              <!-- Minimalist Borderless Table -->
+              <div class="mt-2">
+                <table class="w-full text-xs">
+                  <thead>
+                    <tr class="border-y border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      <th class="py-3 text-left">Deskripsi Item</th>
+                      <th class="py-3 text-right w-16">Qty</th>
+                      <th class="py-3 text-right w-32">Harga</th>
+                      <th class="py-3 text-right w-36">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    ${state.items.map(item => {
+                      const lineTotal = (Number(item.qty) || 0) * (Number(item.price) || 0);
+                      return `
+                        <tr>
+                          <td class="py-3.5 pr-4 font-medium text-slate-800">${escapeHtml(item.desc) || '<span class="text-slate-300 italic">Deskripsi item...</span>'}</td>
+                          <td class="py-3.5 text-right font-mono text-slate-600">${item.qty}</td>
+                          <td class="py-3.5 text-right font-mono text-slate-600">${formatCurrency(item.price, state.currency)}</td>
+                          <td class="py-3.5 text-right font-mono font-semibold text-slate-900">${formatCurrency(lineTotal, state.currency)}</td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Summary & Barcode -->
+              <div class="mt-6 pt-5 border-t border-slate-200 flex justify-between items-start gap-6">
+                <div>
+                  ${barcodeHtml}
+                </div>
+                <div class="w-64 space-y-2 text-xs">
+                  <div class="flex justify-between text-slate-500">
+                    <span>Subtotal</span>
+                    <span class="font-mono text-slate-800">${formatCurrency(totals.subtotal, state.currency)}</span>
+                  </div>
+                  ${totals.discount > 0 ? `
+                  <div class="flex justify-between text-slate-500">
+                    <span>Diskon</span>
+                    <span class="font-mono text-rose-600">-${formatCurrency(totals.discount, state.currency)}</span>
+                  </div>` : ''}
+                  ${totals.taxRate > 0 ? `
+                  <div class="flex justify-between text-slate-500">
+                    <span>Pajak (${totals.taxRate}%)</span>
+                    <span class="font-mono text-slate-800">${formatCurrency(totals.taxAmount, state.currency)}</span>
+                  </div>` : ''}
+                  <div class="flex justify-between items-baseline pt-3 border-t border-slate-900">
+                    <span class="font-bold text-slate-900">Grand Total</span>
+                    <span class="font-mono text-base font-bold text-slate-900">${formatCurrency(totals.grandTotal, state.currency)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer Notes & Signature -->
+            <div class="mt-12 pt-5 border-t border-slate-100 flex justify-between items-end gap-6 text-xs">
+              <div class="max-w-sm text-slate-400 leading-relaxed">
+                ${escapeHtml(state.notes)}
+              </div>
+              ${state.showSignature ? `
+                <div class="text-center shrink-0">
+                  <div class="h-12"></div>
+                  <div class="w-40 border-b border-slate-300 mb-1.5"></div>
+                  <div class="text-[11px] font-medium text-slate-600">${escapeHtml(state.signatureLabel) || 'Hormat Kami'}</div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      // Render SVG Barcode via JsBarcode
+      renderBarcodeSvg(isThermalPaper);
+    }
+
+    function renderBarcodeSvg(isThermal) {
+      if (!state.barcodeShow) return;
+      const svgEl = document.getElementById('rendered-barcode');
+      if (!svgEl || typeof JsBarcode === 'undefined') return;
+
+      const rawCode = (state.barcodeValue || state.docNumber || 'DOC-0000').trim();
+      // Ensure ASCII-safe value for Code128
+      const safeCode = rawCode.replace(/[^\x20-\x7E]/g, '') || 'DOC-0000';
+
+      try {
+        JsBarcode(svgEl, safeCode, {
+          format: 'CODE128',
+          lineColor: '#0f172a',
+          background: 'transparent',
+          width: isThermal ? Math.min(Number(state.barcodeWidth), 1.4) : Number(state.barcodeWidth),
+          height: isThermal ? Math.min(Number(state.barcodeHeight), 34) : Number(state.barcodeHeight),
+          displayValue: state.barcodeText,
+          font: 'JetBrains Mono',
+          fontSize: isThermal ? 9 : 11,
+          textMargin: 3,
+          margin: 0
+        });
+      } catch (err) {
+        console.warn('Barcode error:', err);
+      }
+    }
+
+    // Update helper
+    function updateState(patch, reSyncInputs = false) {
+      state = { ...state, ...patch };
+      saveState();
+      if (reSyncInputs) syncInputsFromState();
+      renderPreview();
+    }
+
+    // Attach Event Listeners
+    function bindEvents() {
+      // Document Type Toggle
+      document.querySelectorAll('.doctype-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          updateState({ docType: btn.dataset.doctype }, true);
+        });
+      });
+
+      // Layout Template Toggle
+      document.querySelectorAll('.layout-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          updateState({ layout: btn.dataset.layout }, true);
+        });
+      });
+
+      // Paper Size & Currency
+      document.getElementById('paper-size').addEventListener('change', (e) => {
+        const size = e.target.value;
+        // Adjust zoom nicely for thermal vs A4
+        const suggestedZoom = (size === 'thermal80' || size === 'thermal58') ? 110 : 90;
+        updateState({ paperSize: size, zoom: suggestedZoom }, true);
+      });
+
+      document.getElementById('currency-select').addEventListener('change', (e) => {
+        updateState({ currency: e.target.value });
+      });
+
+      // Logo Upload
+      document.getElementById('logo-upload').addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          updateState({ logoDataUrl: ev.target.result }, true);
+          showToast('Logo berhasil dipasang');
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+      });
+
+      document.getElementById('btn-remove-logo').addEventListener('click', () => {
+        updateState({ logoDataUrl: '' }, true);
+        showToast('Logo dihapus');
+      });
+
+      // Logo Size & Align & Flow
+      document.getElementById('logo-size').addEventListener('input', (e) => {
+        const val = Number(e.target.value);
+        document.getElementById('logo-size-val').textContent = `${val}px`;
+        updateState({ logoSize: val });
+      });
+
+      document.querySelectorAll('.logo-align-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          updateState({ logoAlign: btn.dataset.logoalign }, true);
+        });
+      });
+
+      document.querySelectorAll('.logo-flow-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          updateState({ logoFlow: btn.dataset.logoflow }, true);
+        });
+      });
+
+      // Text Fields Mapping
+      const textBindings = [
+        ['biz-name', 'bizName'],
+        ['biz-address', 'bizAddress'],
+        ['biz-contact', 'bizContact'],
+        ['client-name', 'clientName'],
+        ['client-info', 'clientInfo'],
+        ['doc-number', 'docNumber'],
+        ['doc-date', 'docDate'],
+        ['doc-secondary', 'docSecondary'],
+        ['barcode-value', 'barcodeValue'],
+        ['doc-notes', 'notes'],
+        ['signature-label', 'signatureLabel']
+      ];
+
+      textBindings.forEach(([id, key]) => {
+        document.getElementById(id).addEventListener('input', (e) => {
+          updateState({ [key]: e.target.value });
+        });
+      });
+
+      document.getElementById('doc-status').addEventListener('change', (e) => {
+        updateState({ docStatus: e.target.value });
+      });
+
+      // Barcode Controls
+      document.getElementById('barcode-show').addEventListener('change', (e) => {
+        updateState({ barcodeShow: e.target.checked }, true);
+      });
+      document.getElementById('barcode-text').addEventListener('change', (e) => {
+        updateState({ barcodeText: e.target.checked });
+      });
+      document.getElementById('barcode-height').addEventListener('input', (e) => {
+        const val = Number(e.target.value);
+        document.getElementById('barcode-height-val').textContent = `${val}px`;
+        updateState({ barcodeHeight: val });
+      });
+      document.getElementById('barcode-width').addEventListener('input', (e) => {
+        const val = Number(e.target.value);
+        document.getElementById('barcode-width-val').textContent = val;
+        updateState({ barcodeWidth: val });
+      });
+
+      // Dynamic Items List (Event Delegation)
+      const itemsList = document.getElementById('items-editor-list');
+      itemsList.addEventListener('input', (e) => {
+        if (!e.target.classList.contains('item-input')) return;
+        const idx = Number(e.target.dataset.idx);
+        const field = e.target.dataset.field;
+        const val = field === 'desc' ? e.target.value : Number(e.target.value);
+        state.items[idx][field] = val;
+        saveState();
+        renderPreview();
+      });
+
+      itemsList.addEventListener('click', (e) => {
+        const delBtn = e.target.closest('.btn-del-item');
+        if (!delBtn) return;
+        const idx = Number(delBtn.dataset.idx);
+        if (state.items.length <= 1) {
+          state.items[0] = { id: Date.now(), desc: '', qty: 1, price: 0 };
+        } else {
+          state.items.splice(idx, 1);
+        }
+        saveState();
+        renderItemsEditor();
+        renderPreview();
+      });
+
+      document.getElementById('btn-add-item').addEventListener('click', () => {
+        state.items.push({ id: Date.now(), desc: '', qty: 1, price: 0 });
+        saveState();
+        renderItemsEditor();
+        renderPreview();
+      });
+
+      // Totals & Signature
+      document.getElementById('discount-val').addEventListener('input', (e) => {
+        updateState({ discount: Number(e.target.value) || 0 });
+      });
+      document.getElementById('tax-rate').addEventListener('input', (e) => {
+        updateState({ taxRate: Number(e.target.value) || 0 });
+      });
+      document.getElementById('show-signature').addEventListener('change', (e) => {
+        updateState({ showSignature: e.target.checked }, true);
+      });
+
+      // Zoom Slider
+      document.getElementById('zoom-slider').addEventListener('input', (e) => {
+        const z = Number(e.target.value);
+        document.getElementById('zoom-value').textContent = `${z}%`;
+        updateState({ zoom: z });
+      });
+
+      // Print / Save PDF
+      document.getElementById('btn-print').addEventListener('click', () => {
+        window.print();
+      });
+
+      // Reset Flow (Inline Confirmation without browser confirm())
+      const resetTrigger = document.getElementById('btn-reset-trigger');
+      const resetConfirmBox = document.getElementById('reset-confirm-box');
+      const resetConfirmBtn = document.getElementById('btn-reset-confirm');
+      const resetCancelBtn = document.getElementById('btn-reset-cancel');
+
+      resetTrigger.addEventListener('click', () => {
+        resetTrigger.classList.add('hidden');
+        resetConfirmBox.classList.remove('hidden');
+        resetConfirmBox.classList.add('flex');
+      });
+
+      resetCancelBtn.addEventListener('click', () => {
+        resetConfirmBox.classList.add('hidden');
+        resetConfirmBox.classList.remove('flex');
+        resetTrigger.classList.remove('hidden');
+      });
+
+      resetConfirmBtn.addEventListener('click', () => {
+        state = getBlankState(state);
+        saveState();
+        syncInputsFromState();
+        renderPreview();
+        resetConfirmBox.classList.add('hidden');
+        resetConfirmBox.classList.remove('flex');
+        resetTrigger.classList.remove('hidden');
+        showToast('Semua data berhasil dikosongkan');
+      });
+
+      // Load Sample Data Button
+      document.getElementById('btn-load-sample').addEventListener('click', () => {
+        const preservedLayout = {
+          docType: state.docType,
+          layout: state.layout,
+          paperSize: state.paperSize,
+          zoom: state.zoom
+        };
+        state = { ...getSampleState(), ...preservedLayout };
+        saveState();
+        syncInputsFromState();
+        renderPreview();
+        showToast('Contoh data dimuat');
+      });
+    }
+
+    // Initialize Application
+    window.addEventListener('DOMContentLoaded', () => {
+      bindEvents();
+      syncInputsFromState();
+      renderPreview();
+    });
+  </script>
 </body>
 </html>
